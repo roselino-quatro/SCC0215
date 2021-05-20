@@ -34,3 +34,10 @@ typedef struct LINE_DATA {
 LineData* readLineCsv(FILE* csv);
 void writeLineBinary(LineData* lData,FILE* binDest);
 void displayLine(LineReg* lReg);
+
+bool matchLineCode(LineReg* lReg,void* code);
+bool matchLineAcceptCard(LineReg* lReg,void* cardStatus);
+bool matchLineName(LineReg* lReg,void* name);
+bool matchLineColor(LineReg* lReg,void* color);
+
+void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*));

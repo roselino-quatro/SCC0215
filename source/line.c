@@ -102,3 +102,38 @@ void displayLine(LineReg* lReg){
 		printf("Aceita cartao: campo com valor nulo\n\n");
 	}
 };
+
+
+bool matchLineCode(LineReg* lReg,void* code) {
+	return (lReg->lineCode == *(int*)code)? true : false;
+};
+
+bool matchLineAcceptCard(LineReg* lReg,void* cardStatus) {
+	return (lReg->acceptsCard == *(char*)cardStatus)? true : false;
+};
+
+bool matchLineName(LineReg* lReg,void* name) {
+	if (lReg->name[0] == '\0') return false;
+	return (strcmp(lReg->name,(char*)name) == 0)? true : false;
+};
+
+bool matchLineColor(LineReg* lReg,void* color) {
+	if (lReg->color[0] == '\0') return false;
+	return (strcmp(lReg->color,(char*)color) == 0)? true : false;
+};
+
+void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*)) {
+	bool anyMatched = false;
+	int regPos = 0;
+	while(regPos < lData->regQty) {
+		LineReg* curReg = &lData->registers[regPos++];
+		if (!curReg->isPresent) continue;
+
+		if (match(curReg,key)) {
+			displayLine(curReg);
+			anyMatched = true;
+		}
+	}
+
+	if (!anyMatched) printf("Registro inexistente\n");
+}

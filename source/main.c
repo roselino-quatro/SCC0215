@@ -18,6 +18,8 @@ int main(int argc, char *argv[]){
 
 	displayLine(&lData->registers[1]);
 	displayLine(&lData->registers[2]);
+
+	selectLineWhere(lData,(void*)"S",matchLineAcceptCard);
 	
 	FILE* bin2 = fopen("lteste","wb");
 	writeLineBinary(lData,bin2);
