@@ -15,6 +15,9 @@ int main(int argc, char *argv[]){
 	FILE* lcsv = fopen(argv[2],"rb");
 	LineData* lData = readLineCsv(lcsv);
 	fclose(lcsv);
+
+	displayLine(&lData->registers[1]);
+	displayLine(&lData->registers[2]);
 	
 	FILE* bin2 = fopen("lteste","wb");
 	writeLineBinary(lData,bin2);

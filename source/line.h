@@ -33,3 +33,4 @@ typedef struct LINE_DATA {
 
 LineData* readLineCsv(FILE* csv);
 void writeLineBinary(LineData* lData,FILE* binDest);
+void displayLine(LineReg* lReg);

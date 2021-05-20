@@ -85,3 +85,20 @@ void writeLineBinary(LineData* lData,FILE* binDest){
 	lData->header.isStable = true;
 	fwrite(&lData->header.isStable,1,1,binDest);
 }
+
+void displayLine(LineReg* lReg){
+	if(!lReg) return;
+
+	printf("Nome da linha: %s\n",(lReg->nameSize != 0)? lReg->name : "campo com valor nulo");
+	printf("Cor que descreve a linha: %s\n",lReg->color);
+
+	if(lReg->acceptsCard == 'S'){
+		printf("Aceita cartao: PAGAMENTO  SOMENTE  COM  CARTAO  SEM  PRESENCA  DE COBRADOR\n\n");
+	} else if(lReg->acceptsCard == 'N'){
+		printf("Aceita cartao: PAGAMENTO EM CARTAO E DINHEIRO\n\n");
+	} else if(lReg->acceptsCard == 'F'){
+		printf("Aceita cartao: PAGAMENTO EM CARTAO SOMENTE NO FINAL DE SEMANA\n\n");
+	} else{
+		printf("Aceita cartao: campo com valor nulo\n\n");
+	}
+};
