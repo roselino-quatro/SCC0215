@@ -80,3 +80,18 @@ void writeVehicleBinary(VehicleData* vData,FILE* binDest){
 	vData->header.isStable = true;
 	fwrite(&vData->header.isStable,1,1,binDest);
 }
+
+void displayVehicle(VehicleReg* vReg) {
+	printf("Prefixo do veiculo: %s\n",vReg->prefix);
+	printf("Modelo do veiculo: %s\n",vReg->model);
+	printf("Categoria do veiculo: %s\n",vReg->category);
+
+	char* months[12] = {"janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"};
+	
+	int day = atoi(&vReg->data[8]);
+	char* month = months[atoi(&vReg->data[5])-1];
+	int year = atoi(&vReg->data[0]);
+
+	printf("Data de entrada do veiculo na frota: %d de %s de %d\n",day,month,year);
+	printf("Quantidade de lugares sentados disponiveis: %d\n\n",vReg->seatQty);
+}
