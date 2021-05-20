@@ -35,8 +35,14 @@ LineData* readLineCsv(FILE* csv){
 		}
 		
 		fscanf(csv,"%c,",&cReg->acceptsCard);
+
 		fscanf(csv,"%[^,],",cReg->name);
 		cReg->nameSize = strlen(cReg->name);
+		if(strncmp(cReg->name,"NULO",4) == 0){
+			cReg->name[0] = '\0';
+			cReg->nameSize = 0;
+		}
+		
 		fscanf(csv,"%[^\n]\n",cReg->color);
 		cReg->colorSize = strlen(cReg->color);
 		cReg->regSize = 23 + cReg->nameSize + cReg->colorSize;
