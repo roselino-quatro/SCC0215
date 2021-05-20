@@ -43,4 +43,5 @@ typedef struct VEHICLE_DATA {
 	VehicleReg* registers;
 }VehicleData;
 
-VehicleData readVehicleCsv(FILE* csv);
+VehicleData* readVehicleCsv(FILE* csv);
+void writeVehicleBinary(VehicleData* vData,FILE* binDest);
