@@ -45,3 +45,4 @@ typedef struct VEHICLE_DATA {
 
 VehicleData* readVehicleCsv(FILE* csv);
 void writeVehicleBinary(VehicleData* vData,FILE* binDest);
+displayVehicle(VehicleReg* vReg);
