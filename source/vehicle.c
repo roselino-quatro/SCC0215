@@ -40,7 +40,7 @@ VehicleData* readVehicleCsv(FILE* csv){
 
 	// Shrink registers array back to appropriate size
 	vData->regQty = rpos;
-	vData->registers = realloc(vData->registers,(vData->regQty-1) * sizeof(VehicleReg));
+	vData->registers = realloc(vData->registers,(vData->regQty) * sizeof(VehicleReg));
 	return vData;
 }
 
