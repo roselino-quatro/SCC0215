@@ -26,11 +26,11 @@ LineData* readLineCsv(FILE* csv){
 		}
 
 		LineReg* cReg = &lData->registers[rpos++];
-		if (code[0] == '*') {
-			cReg->lineCode = atoi(&code[1]);
+		if (code[0] != '*') {
+			cReg->lineCode = atoi(code);
 			cReg->isPresent = true;
 		} else {
-			cReg->lineCode = atoi(code);
+			cReg->lineCode = atoi(&code[1]);
 			cReg->isPresent = false;
 		}
 		
