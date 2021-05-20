@@ -31,4 +31,5 @@ typedef struct LINE_DATA {
 	LineReg* registers;
 }LineData;
 
-LineData readLineCsv(FILE* csv);
+LineData* readLineCsv(FILE* csv);
+void writeLineBinary(LineData* lData,FILE* binDest);
