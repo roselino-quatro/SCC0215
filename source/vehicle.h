@@ -45,7 +45,7 @@ typedef struct VEHICLE_DATA {
 
 VehicleData* readVehicleCsv(FILE* csv);
 void writeVehicleBinary(VehicleData* vData,FILE* binDest);
-displayVehicle(VehicleReg* vReg);
+void displayVehicle(VehicleReg* vReg);
 
 bool matchVehiclePrefix(VehicleReg* vReg,void* prefix);
 bool matchVehicleData(VehicleReg* vReg,void* data);
