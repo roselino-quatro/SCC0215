@@ -95,3 +95,45 @@ void displayVehicle(VehicleReg* vReg) {
 	printf("Data de entrada do veiculo na frota: %d de %s de %d\n",day,month,year);
 	printf("Quantidade de lugares sentados disponiveis: %d\n\n",vReg->seatQty);
 }
+
+
+bool matchVehiclePrefix(VehicleReg* vReg,void* prefix) {
+	if (vReg->prefix[0] == '\0') return false;
+	return (strncmp(vReg->prefix,(char*)prefix,5) == 0)? true : false;
+};
+
+bool matchVehicleData(VehicleReg* vReg,void* data) {
+	if (vReg->data[0] == '\0') return false;
+	return (strncmp(vReg->data,(char*)data,10) == 0)? true : false;
+};
+
+bool matchVehicleSeatQty(VehicleReg* vReg,void* seatQty) {
+	if (vReg->seatQty == -1) return false;
+	return (vReg->seatQty == *(int*)seatQty)? true : false;
+};
+
+bool matchVehicleModel(VehicleReg* vReg,void* model) {
+	if (vReg->model[0] == '\0') return false;
+	return (strcmp(vReg->model,(char*)model) == 0)? true : false;
+};
+
+bool matchVehicleCategory(VehicleReg* vReg,void* category) {
+	if (vReg->category[0] == '\0') return false;
+	return (strcmp(vReg->category,(char*)category) == 0)? true : false;
+};
+
+void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,void*)) {
+	bool anyMatched = false;
+	int regPos = 0;
+	while (regPos < vData->regQty) {
+		VehicleReg* curReg = &vData->registers[regPos++];
+		if (!curReg->isPresent) continue;
+
+		if (match(curReg,key)) {
+			displayVehicle(curReg);
+			anyMatched = true;
+		}
+	}
+
+	if (!anyMatched) printf("Registro inexistente\n");
+}
