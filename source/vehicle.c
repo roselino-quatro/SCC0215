@@ -27,6 +27,7 @@ VehicleData* readVehicleCsv(FILE* csv){
 		}
 
 		VehicleReg* cReg = &vData->registers[rpos++];
+		cReg->isPresent = (cReg->prefix[0] != '*')? true : false;
 		
 		fscanf(csv,"%[^,],",cReg->data);
 		fscanf(csv,"%d,",&cReg->seatQty);
