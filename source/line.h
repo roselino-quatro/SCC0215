@@ -1,3 +1,6 @@
+#ifndef _LINE_H
+#define _LINE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,3 +44,5 @@ bool matchLineName(LineReg* lReg,void* name);
 bool matchLineColor(LineReg* lReg,void* color);
 
 void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*));
+
+#endif

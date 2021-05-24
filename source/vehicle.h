@@ -1,3 +1,6 @@
+#ifndef _VEHICLE_H
+#define _VEHICLE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,3 +57,5 @@ bool matchVehicleModel(VehicleReg* vReg,void* model);
 bool matchVehicleCategory(VehicleReg* vReg,void* category);
 
 void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,void*));
+
+#endif

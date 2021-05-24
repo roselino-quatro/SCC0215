@@ -54,30 +54,40 @@ LineData* readLineCsv(FILE* csv){
 	return lData;
 }
 
+// Frees LineData struct
+bool freeLineData(LineData* lData) {
+	if (lData == NULL) return false;
+
+	free(lData->registers);
+	free(lData);
+
+	return true;
+}
+
 void writeLineBinary(LineData* lData,FILE* binDest){
 	// Write header data - mark the file as unstable until end of write
 	lData->header.isStable = false;
-	fwrite(&lData->header.isStable,1,1,binDest);
-	fwrite(&lData->header.regByteOff,8,1,binDest);
-	fwrite(&lData->header.regQty,4,1,binDest);
-	fwrite(&lData->header.regRemovedQty,4,1,binDest);
-	fwrite(&lData->header.descCode,1,15,binDest);
-	fwrite(&lData->header.descCard,1,13,binDest);
-	fwrite(&lData->header.descName,1,13,binDest);
-	fwrite(&lData->header.descLine,1,24,binDest);
+	fwrite(&lData->header.isStable, sizeof(char), 1, binDest);
+	fwrite(&lData->header.regByteOff, sizeof(long), 1, binDest);
+	fwrite(&lData->header.regQty, sizeof(int), 1, binDest);
+	fwrite(&lData->header.regRemovedQty, sizeof(int), 1, binDest);
+	fwrite(&lData->header.descCode, sizeof(char), 15, binDest);
+	fwrite(&lData->header.descCard, sizeof(char), 13, binDest);
+	fwrite(&lData->header.descName, sizeof(char), 13, binDest);
+	fwrite(&lData->header.descLine, sizeof(char), 24, binDest);
 
 	// Iterate through registers and write their data
 	int regpos = 0;
 	while (regpos < lData->regQty){
 		LineReg* curReg = &lData->registers[regpos++];
-		fwrite(&curReg->isPresent,1,1,binDest);
-		fwrite(&curReg->regSize,4,1,binDest);
-		fwrite(&curReg->lineCode,4,1,binDest);
-		fwrite(&curReg->acceptsCard,1,1,binDest);
-		fwrite(&curReg->nameSize,4,1,binDest);
-		fwrite(&curReg->name,1,curReg->nameSize,binDest);
-		fwrite(&curReg->colorSize,4,1,binDest);
-		fwrite(&curReg->color,1,curReg->colorSize,binDest);
+		fwrite(&curReg->isPresent, sizeof(char), 1, binDest);
+		fwrite(&curReg->regSize, sizeof(int), 1, binDest);
+		fwrite(&curReg->lineCode, sizeof(int), 1, binDest);
+		fwrite(&curReg->acceptsCard, sizeof(char), 1, binDest);
+		fwrite(&curReg->nameSize, sizeof(int), 1, binDest);
+		fwrite(&curReg->name, sizeof(char), curReg->nameSize, binDest);
+		fwrite(&curReg->colorSize, sizeof(int), 1, binDest);
+		fwrite(&curReg->color, sizeof(char), curReg->colorSize, binDest);
 	}
 
 	// Rewind and mark file as stable
@@ -122,6 +132,7 @@ bool matchLineColor(LineReg* lReg,void* color) {
 	return (strcmp(lReg->color,(char*)color) == 0)? true : false;
 };
 
+// TODO depois precisamos usar o scan quote string
 void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*)) {
 	bool anyMatched = false;
 	int regPos = 0;
