@@ -38,6 +38,8 @@ LineData* readLineCsv(FILE* csv);
 void writeLineBinary(LineData* lData,FILE* binDest);
 void displayLine(LineReg* lReg);
 
+bool freeLineData(LineData* lData);
+
 bool matchLineCode(LineReg* lReg,void* code);
 bool matchLineAcceptCard(LineReg* lReg,void* cardStatus);
 bool matchLineName(LineReg* lReg,void* name);

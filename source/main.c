@@ -25,5 +25,8 @@ int main(int argc, char *argv[]){
 	writeLineBinary(lData,bin2);
 	fclose(bin2);
 
+	freeLineData(lData);
+	freeVehicleData(vData);
+
 	return 0;
 }

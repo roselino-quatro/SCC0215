@@ -45,6 +45,16 @@ VehicleData* readVehicleCsv(FILE* csv){
 	return vData;
 }
 
+// Frees vehicleData struct
+bool freeVehicleData(VehicleData* vData) {
+	if (vData == NULL) return false;
+
+	free(vData->registers);
+	free(vData);
+
+	return true;
+}
+
 void writeVehicleBinary(VehicleData* vData,FILE* binDest){
 	// Write header data - mark the file as unstable until end of write
 	vData->header.isStable = false;
