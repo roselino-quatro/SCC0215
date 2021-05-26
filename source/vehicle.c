@@ -1,5 +1,6 @@
 #include "vehicle.h"
 
+// Lê e parsea o CSV do arquivo e armazena em uma struct
 VehicleData* readVehicleCsv(FILE* csv){
 	if(csv == NULL) {
 		printf("Falha no processamentodo arquivo.\n");
@@ -50,7 +51,7 @@ VehicleData* readVehicleCsv(FILE* csv){
 	return vData;
 }
 
-// Frees vehicleData struct
+// Destructor que libera memoria alocada de uma struct VehicleData
 bool freeVehicleData(VehicleData* vData) {
 	if (vData == NULL) return false;
 
@@ -60,6 +61,7 @@ bool freeVehicleData(VehicleData* vData) {
 	return true;
 }
 
+// Transfere os dados de uma VehicleData para um arquivo binario seguindo as regras passadas nas especificaçẽos
 void writeVehicleBinary(VehicleData* vData,FILE* binDest){
 	// Write header data - mark the file as unstable until end of write
 	vData->header.isStable = false;
@@ -96,6 +98,7 @@ void writeVehicleBinary(VehicleData* vData,FILE* binDest){
 	fwrite(&vData->header.isStable,1,1,binDest);
 }
 
+// Imprime informações do registro de veiculo
 void displayVehicle(VehicleReg* vReg) {
 	printf("Prefixo do veiculo: %s\n",vReg->prefix);
 	printf("Modelo do veiculo: %s\n",vReg->model);
@@ -112,6 +115,7 @@ void displayVehicle(VehicleReg* vReg) {
 }
 
 
+// Familia de funções para a selectVehicleWhere
 bool matchVehiclePrefix(VehicleReg* vReg,void* prefix) {
 	if (vReg->prefix[0] == '\0') return false;
 	return (strncmp(vReg->prefix,(char*)prefix,5) == 0)? true : false;
@@ -137,6 +141,7 @@ bool matchVehicleCategory(VehicleReg* vReg,void* category) {
 	return (strcmp(vReg->category,(char*)category) == 0)? true : false;
 };
 
+// Imprime os matchs de uma comparação dentro de uma struct Data
 void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,void*)) {
 	if(vData == NULL) {
 		printf("Falha no processamento do arquivo.\n");
@@ -158,11 +163,13 @@ void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,v
 	if (!anyMatched) printf("Registro inexistente\n");
 }
 
+// Imprime todos os registros não removidos de uma struct
 void selectVehicle(VehicleData* vData) {
 	if(vData == NULL) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
+
 	bool anyMatched = false;
 	int regPos = 0;
 	while (regPos < vData->regQty) {

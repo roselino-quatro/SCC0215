@@ -46,18 +46,62 @@ typedef struct VEHICLE_DATA {
 	VehicleReg* registers;
 }VehicleData;
 
+/****
+ * Lê e parsea o CSV do arquivo e armazena em uma struct
+ * 
+ * @param csv ponteiro para o arquivo a ser lido
+ * @return ponteiro para a struct allocada na função
+ */
 VehicleData* readVehicleCsv(FILE* csv);
+
+/****
+ * Destructor que libera memoria alocada de uma struct VehicleData
+ * 
+ * @param vData ponteiro para struct a ser liberada
+ * @return boolean para caso a função tenha sucesso ou não
+ */
 bool freeVehicleData(VehicleData* vData);
 
+
+/****
+ * Transfere os dados de uma VehicleData para um arquivo binario seguindo as regras passadas nas especificaçẽos
+ * 
+ * @param vData struct a ser transferida
+ * @param binDest arquivo alvo
+ */
 void writeVehicleBinary(VehicleData* vData,FILE* binDest);
+/****
+ * Imprime informações do registro de veiculo
+ * 
+ * @param vReg registro a ser impresso
+ */
 void displayVehicle(VehicleReg* vReg);
 
+/****
+ * Familia de funções para a selectVehicleWhere
+ * 
+ * @param vReg registro a ser verificado
+ * @param secondParameter valor a ser comparado
+ */
 bool matchVehiclePrefix(VehicleReg* vReg,void* prefix);
 bool matchVehicleData(VehicleReg* vReg,void* data);
 bool matchVehicleSeatQty(VehicleReg* vReg,void* seatQty);
 bool matchVehicleModel(VehicleReg* vReg,void* model);
 bool matchVehicleCategory(VehicleReg* vReg,void* category);
 
+/****
+ * Imprime os matchs de uma comparação dentro de uma struct Data
+ * 
+ * @param vData struct a ser buscada
+ * @param match ponteiro de função para uma das funções match
+ */
 void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,void*));
+
+/****
+ * Imprime todos os registros não removidos de uma struct
+ * 
+ * @param vReg registro a ser verificado 
+ */
+void selectVehicle(VehicleData* vData) {
 
 #endif

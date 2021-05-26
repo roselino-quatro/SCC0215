@@ -1,5 +1,6 @@
 #include "line.h"
 
+// Lê e parsea o CSV do arquivo e armazena em uma struct
 LineData* readLineCsv(FILE* csv){
 	if(csv == NULL) {
 		printf("Falha no processamentodo arquivo.\n");
@@ -58,7 +59,7 @@ LineData* readLineCsv(FILE* csv){
 	return lData;
 }
 
-// Frees LineData struct
+// Destructor que libera memoria alocada de uma struct LineData
 bool freeLineData(LineData* lData) {
 	if (lData == NULL) return false;
 
@@ -68,6 +69,7 @@ bool freeLineData(LineData* lData) {
 	return true;
 }
 
+// Transfere os dados de uma LineData para um arquivo binario seguindo as regras passadas nas especificaçẽos
 void writeLineBinary(LineData* lData,FILE* binDest){
 	// Write header data - mark the file as unstable until end of write
 	lData->header.isStable = false;
@@ -117,7 +119,7 @@ void displayLine(LineReg* lReg){
 	}
 };
 
-
+// Familia de funções para a selectLineWhere
 bool matchLineCode(LineReg* lReg,void* code) {
 	return (lReg->lineCode == *(int*)code)? true : false;
 };
@@ -136,6 +138,7 @@ bool matchLineColor(LineReg* lReg,void* color) {
 	return (strcmp(lReg->color,(char*)color) == 0)? true : false;
 };
 
+// Imprime os matchs de uma comparação dentro de uma struct Dat
 void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*)) {
 	if(lData == NULL) {
 		printf("Falha no processamento do arquivo.\n");
@@ -157,6 +160,7 @@ void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*)) {
 	if (!anyMatched) printf("Registro inexistente\n");
 }
 
+// Imprime todos os registros não removidos de uma struct
 void selectLine(LineData* lData) {
 	if(lData == NULL) {
 		printf("Falha no processamento do arquivo.\n");
