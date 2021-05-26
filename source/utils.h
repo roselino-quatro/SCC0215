@@ -8,4 +8,6 @@
 void binarioNaTela(char *nomeArquivoBinario);
 void scan_quote_string(char *str);
 
+FILE* openFile(const char* name, const char* mode);
+
 #endif

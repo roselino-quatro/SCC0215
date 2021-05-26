@@ -1,6 +1,10 @@
 #include "line.h"
 
 LineData* readLineCsv(FILE* csv){
+	if(csv == NULL) {
+		printf("Falha no processamentodo arquivo.\n");
+		return NULL;
+	}
 	LineData* lData = malloc(sizeof(LineData));
 
 	// Initialize and read header from csv file

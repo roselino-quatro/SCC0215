@@ -2,17 +2,17 @@
 #include "line.h"
 
 int main(int argc, char *argv[]){
-	FILE* vcsv = fopen(argv[1],"rb");
+	FILE* vcsv = openFile(argv[1],"rb");
 	VehicleData* vData = readVehicleCsv(vcsv);
 	fclose(vcsv);
 	
-	FILE* bin = fopen("teste","wb");
+	FILE* bin = openFile("teste","wb");
 	writeVehicleBinary(vData,bin);
 	fclose(bin);
 
 	selectVehicleWhere(vData,"JC314",matchVehiclePrefix);
 
-	FILE* lcsv = fopen(argv[2],"rb");
+	FILE* lcsv = openFile(argv[2],"rb");
 	LineData* lData = readLineCsv(lcsv);
 	fclose(lcsv);
 
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
 
 	selectLineWhere(lData,(void*)"S",matchLineAcceptCard);
 	
-	FILE* bin2 = fopen("lteste","wb");
+	FILE* bin2 = openFile("lteste","wb");
 	writeLineBinary(lData,bin2);
 	fclose(bin2);
 

@@ -64,3 +64,12 @@ void scan_quote_string(char *str) {
 		strcpy(str, "");
 	}
 }
+
+// Abre um arquivo tratando erros
+FILE* openFile(const char* name, const char* mode) {
+	if(name == NULL || mode == NULL) perror("Null values in OpenFIle");
+
+	FILE* arq = fopen(name, mode);
+
+	return arq;
+}

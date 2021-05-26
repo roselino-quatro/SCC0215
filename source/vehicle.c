@@ -1,6 +1,11 @@
 #include "vehicle.h"
 
 VehicleData* readVehicleCsv(FILE* csv){
+	if(csv == NULL) {
+		printf("Falha no processamentodo arquivo.\n");
+		return NULL;
+	}
+
 	VehicleData* vData = malloc(sizeof(VehicleData));
 
 	// Initialize and read header from csv file
