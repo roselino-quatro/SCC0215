@@ -138,6 +138,11 @@ bool matchVehicleCategory(VehicleReg* vReg,void* category) {
 };
 
 void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,void*)) {
+	if(vData == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+
 	bool anyMatched = false;
 	int regPos = 0;
 	while (regPos < vData->regQty) {
@@ -145,6 +150,24 @@ void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,v
 		if (!curReg->isPresent) continue;
 
 		if (match(curReg,key)) {
+			displayVehicle(curReg);
+			anyMatched = true;
+		}
+	}
+
+	if (!anyMatched) printf("Registro inexistente\n");
+}
+
+void selectVehicle(VehicleData* vData) {
+	if(vData == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+	bool anyMatched = false;
+	int regPos = 0;
+	while (regPos < vData->regQty) {
+		VehicleReg* curReg = &vData->registers[regPos++];
+		if (curReg->isPresent) {
 			displayVehicle(curReg);
 			anyMatched = true;
 		}

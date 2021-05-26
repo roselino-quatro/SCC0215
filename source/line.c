@@ -136,8 +136,12 @@ bool matchLineColor(LineReg* lReg,void* color) {
 	return (strcmp(lReg->color,(char*)color) == 0)? true : false;
 };
 
-// TODO depois precisamos usar o scan quote string
 void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*)) {
+	if(lData == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+
 	bool anyMatched = false;
 	int regPos = 0;
 	while(regPos < lData->regQty) {
@@ -145,6 +149,25 @@ void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*)) {
 		if (!curReg->isPresent) continue;
 
 		if (match(curReg,key)) {
+			displayLine(curReg);
+			anyMatched = true;
+		}
+	}
+
+	if (!anyMatched) printf("Registro inexistente\n");
+}
+
+void selectLine(LineData* lData) {
+	if(lData == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+
+	bool anyMatched = false;
+	int regPos = 0;
+	while(regPos < lData->regQty) {
+		LineReg* curReg = &lData->registers[regPos++];
+		if (curReg->isPresent) {
 			displayLine(curReg);
 			anyMatched = true;
 		}

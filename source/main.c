@@ -1,5 +1,6 @@
 #include "vehicle.h"
 #include "line.h"
+#include "utils.h"
 
 int main(int argc, char *argv[]){
 	FILE* vcsv = openFile(argv[1],"rb");
