@@ -283,7 +283,7 @@ void insertVehicleRegisters(VehicleData* vData,int start,int end,FILE* bin){
 		if (curReg->categorySize != 0){
 			fwrite(curReg->category,sizeof(char),curReg->categorySize,bin);
 		}
-		vData->header.regByteOff += cReg->regSize;
+		vData->header.regByteOff += curReg->regSize;
 	}
 
 	rewind(bin);
