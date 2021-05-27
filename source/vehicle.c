@@ -10,7 +10,7 @@ VehicleData* readVehicleCsv(FILE* csv){
 	VehicleData* vData = malloc(sizeof(VehicleData));
 
 	// Initialize and read header from csv file
-	vData->header.isStable = true;
+	vData->header.isStable = '0';
 	vData->header.regByteOff = 166;
 	vData->header.regQty = 0;
 	vData->header.regRemovedQty = 0;
@@ -33,16 +33,43 @@ VehicleData* readVehicleCsv(FILE* csv){
 		}
 
 		VehicleReg* cReg = &vData->registers[rpos++];
-		cReg->isPresent = (cReg->prefix[0] != '*')? true : false;
+		if (cReg->prefix[0] != '*') {
+			cReg->isPresent = true;
+			vData->header.regQty++;
+		} else {
+			cReg->isPresent = false;
+			vData->header.regRemovedQty++;
+		}
 		
 		fscanf(csv,"%[^,],",cReg->data);
+		if(strncmp(cReg->data,"NULO",4) == 0){
+			memcpy(cReg->data,"@@@@@@@@@@",10);
+		}
+
+		// Since the invalid value is a string NULO, setting the field to -1
+		// effectively makes it the "default" value when the invalid is read
+		cReg->seatQty = -1;
 		fscanf(csv,"%d,",&cReg->seatQty);
+
+		cReg->lineCode = -1;
 		fscanf(csv,"%d,",&cReg->lineCode);
+
 		fscanf(csv,"%[^,],",cReg->model);
 		cReg->modelSize = strlen(cReg->model);
+		if(strncmp(cReg->model,"NULO",4) == 0){
+			cReg->model[0] = '\0';
+			cReg->modelSize = 0;
+		}
+
 		fscanf(csv,"%[^\n]\n",cReg->category);
 		cReg->categorySize = strlen(cReg->category);
+		if(strncmp(cReg->category,"NULO",4) == 0){
+			cReg->category[0] = '\0';
+			cReg->categorySize = 0;
+		}
+
 		cReg->regSize = 23 + cReg->modelSize + cReg->categorySize;
+		vData->header.regByteOff += cReg->regSize;
 	}
 
 	// Shrink registers array back to appropriate size
@@ -62,40 +89,53 @@ bool freeVehicleData(VehicleData* vData) {
 }
 
 // Transfere os dados de uma VehicleData para um arquivo binario seguindo as regras passadas nas especificaçẽos
+// TODO: maybe replace header write with intermediate buffer then fwrite the buffer?
 void writeVehicleBinary(VehicleData* vData,FILE* binDest){
 	// Write header data - mark the file as unstable until end of write
 	vData->header.isStable = false;
-	fwrite(&vData->header.isStable,1,1,binDest);
-	fwrite(&vData->header.regByteOff,8,1,binDest);
-	fwrite(&vData->header.regQty,4,1,binDest);
-	fwrite(&vData->header.regRemovedQty,4,1,binDest);
-	fwrite(vData->header.descPrefix,1,18,binDest);
-	fwrite(vData->header.descData,1,35,binDest);
-	fwrite(vData->header.descSeats,1,42,binDest);
-	fwrite(vData->header.descLine,1,26,binDest);
-	fwrite(vData->header.descModel,1,17,binDest);
-	fwrite(vData->header.descCategory,1,20,binDest);
+	fwrite(&vData->header.isStable,sizeof(char),1,binDest);
+	fwrite(&vData->header.regByteOff,sizeof(long),1,binDest);
+	fwrite(&vData->header.regQty,sizeof(int),1,binDest);
+	fwrite(&vData->header.regRemovedQty,sizeof(int),1,binDest);
+	fwrite(vData->header.descPrefix,sizeof(char),18,binDest);
+	fwrite(vData->header.descData,sizeof(char),35,binDest);
+	fwrite(vData->header.descSeats,sizeof(char),42,binDest);
+	fwrite(vData->header.descLine,sizeof(char),26,binDest);
+	fwrite(vData->header.descModel,sizeof(char),17,binDest);
+	fwrite(vData->header.descCategory,sizeof(char),20,binDest);
 
 	// Iterate through registers and write their data
 	int regpos = 0;
 	while (regpos < vData->regQty){
 		VehicleReg* curReg = &vData->registers[regpos++];
-		fwrite(&curReg->isPresent,1,1,binDest);
-		fwrite(&curReg->regSize,4,1,binDest);
-		fwrite(curReg->prefix,1,5,binDest);
-		fwrite(curReg->data,1,10,binDest);
-		fwrite(&curReg->seatQty,4,1,binDest);
-		fwrite(&curReg->lineCode,4,1,binDest);
-		fwrite(&curReg->modelSize,4,1,binDest);
-		fwrite(curReg->model,1,curReg->modelSize,binDest);
-		fwrite(&curReg->categorySize,4,1,binDest);
-		fwrite(curReg->category,1,curReg->categorySize,binDest);
+		fwrite(&curReg->isPresent,sizeof(char),1,binDest);
+		fwrite(&curReg->regSize,sizeof(int),1,binDest);
+		fwrite(&curReg->prefix,sizeof(char),5,binDest);
+
+		if(curReg->data[0] != '\0'){
+			fwrite(curReg->data,sizeof(char),10,binDest);
+		} else {
+			fputs("\0@@@@@@@@@",binDest);
+		}
+		
+		fwrite(&curReg->seatQty,sizeof(int),1,binDest);
+		fwrite(&curReg->lineCode,sizeof(int),1,binDest);
+		
+		fwrite(&curReg->modelSize,sizeof(int),1,binDest);
+		if (curReg->modelSize != 0){
+			fwrite(curReg->model,sizeof(char),curReg->modelSize,binDest);
+		}
+		
+		fwrite(&curReg->categorySize,sizeof(int),1,binDest);
+		if (curReg->categorySize != 0){
+			fwrite(curReg->category,sizeof(char),curReg->categorySize,binDest);
+		}
 	}
 
 	// Rewind and mark file as stable
 	rewind(binDest);
 	vData->header.isStable = true;
-	fwrite(&vData->header.isStable,1,1,binDest);
+	fwrite(&vData->header.isStable,sizeof(char),1,binDest);
 }
 
 // Imprime informações do registro de veiculo
