@@ -209,11 +209,11 @@ void appendVehicleRegisters(VehicleData* vData,int qty){
 
 		scanf("\"%[^\"]\"",curReg->prefix);
 
-		if (cReg->prefix[0] != '*') {
-			cReg->isPresent = true;
+		if (curReg->prefix[0] != '*') {
+			curReg->isPresent = true;
 			vData->header.regQty++;
 		} else {
-			cReg->isPresent = false;
+			curReg->isPresent = false;
 			vData->header.regRemovedQty++;
 		}
 
@@ -241,9 +241,55 @@ void appendVehicleRegisters(VehicleData* vData,int qty){
 			curReg->category[0] = '\0';
 			curReg->categorySize = 0;
 		}
+
+		curReg->regSize = 23 + curReg->modelSize + curReg->categorySize;
 	}
 	
 	vData->regQty = newRegQty;
+}
+
+void insertVehicleRegisters(VehicleData* vData,int start,int end,FILE* bin){
+	if (bin == NULL){
+		printf("Falha no processamento do arquivo\n");
+		return NULL;
+	}
+	
+	rewind(bin);
+	fwrite("1",sizeof(char),1,bin);	// Mark file as unstable
+	
+	fseek(bin,vData->header.regByteOff,SEEK_SET);
+
+	while (start < end){
+		VehicleReg* curReg = &vData->registers[start++];
+		fwrite(&curReg->isPresent,sizeof(char),1,bin);
+		fwrite(&curReg->regSize,sizeof(int),1,bin);
+		fwrite(&curReg->prefix,sizeof(char),5,bin);
+
+		if(curReg->data[0] != '\0'){
+			fwrite(curReg->data,sizeof(char),10,bin);
+		} else {
+			fputs("\0@@@@@@@@@",bin);
+		}
+		
+		fwrite(&curReg->seatQty,sizeof(int),1,bin);
+		fwrite(&curReg->lineCode,sizeof(int),1,bin);
+		
+		fwrite(&curReg->modelSize,sizeof(int),1,bin);
+		if (curReg->modelSize != 0){
+			fwrite(curReg->model,sizeof(char),curReg->modelSize,bin);
+		}
+		
+		fwrite(&curReg->categorySize,sizeof(int),1,bin);
+		if (curReg->categorySize != 0){
+			fwrite(curReg->category,sizeof(char),curReg->categorySize,bin);
+		}
+	}
+
+	rewind(bin);
+	fwrite("0",sizeof(char),1,bin);
+	fwrite(vData->header.regByteOff,sizeof(long),1,bin);
+	fwrite(vData->header.regQty,sizeof(int),1,bin);
+	fwrite(vData->header.regRemovedQty,sizeof(int),1,bin);
 }
 
 // Imprime informações do registro de veiculo
