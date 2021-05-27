@@ -78,6 +78,68 @@ VehicleData* readVehicleCsv(FILE* csv){
 	return vData;
 }
 
+VehicleData* readVehicleBinary(FILE* bin){
+	if(bin == NULL){
+		printf("Falha no processamento do arquivo\n");
+		return NULL;
+	} 
+
+	VehicleData* vData = malloc(sizeof(VehicleData));
+
+	// Read header data - mark the file as unstable until end of read
+	char header[175];
+	fread(header,sizeof(char),175,bin);
+
+	vData->header.isStable = '0';	// Start of operation - mark file as unstable
+	memcpy(&vData->header.regByteOff,&header[1],sizeof(long));
+	memcpy(&vData->header.regQty,&header[9],sizeof(int));
+	memcpy(&vData->header.regRemovedQty,&header[13],sizeof(int));
+	memcpy(&vData->header.descPrefix,&header[17],18*sizeof(char));
+	memcpy(&vData->header.descData,&header[35],35*sizeof(char));
+	memcpy(&vData->header.descSeats,&header[70],42*sizeof(char));
+	memcpy(&vData->header.descLine,&header[112],26*sizeof(char));
+	memcpy(&vData->header.descModel,&header[138],17*sizeof(char));
+	memcpy(&vData->header.descCategory,&header[155],20*sizeof(char));
+
+	vData->regQty = 1;
+	vData->registers = malloc(vData->regQty * sizeof(VehicleReg));
+	int rpos = 0;
+	char regBuffer[32];
+	while (fread(regBuffer,sizeof(char),32,bin) != 0) {
+		if (rpos+1 == vData->regQty){
+			vData->regQty *= 2;
+			vData->registers = realloc(vData->registers,vData->regQty * sizeof(VehicleReg));
+		}
+
+		VehicleReg* cReg = &vData->registers[rpos++];
+
+		memcpy(&cReg->isPresent,&regBuffer[0],sizeof(char));
+		memcpy(&cReg->regSize,&regBuffer[1],sizeof(int));
+		memcpy(cReg->prefix,&regBuffer[5],5*sizeof(char));
+		memcpy(cReg->data,&regBuffer[10],10*sizeof(char));
+		memcpy(&cReg->seatQty,&regBuffer[20],sizeof(int));
+		memcpy(&cReg->lineCode,&regBuffer[24],sizeof(int));
+
+		memcpy(&cReg->modelSize,&regBuffer[28],sizeof(int));
+		if(cReg->modelSize != 0){
+			fread(cReg->model,sizeof(char),cReg->modelSize,bin);
+		}
+		
+		fread(&(cReg->categorySize),sizeof(int),1,bin);
+		if(cReg->categorySize != 0){
+			fread(cReg->category,sizeof(char),cReg->categorySize,bin);
+		}
+	}
+	// Shrink registers to appropriate size
+	vData->registers = realloc(vData->registers,(vData->regQty) * sizeof(VehicleReg));
+
+	// Rewind and mark file as stable
+	vData->header.isStable = true;
+	vData->regQty = rpos;
+	
+	return vData;
+}
+
 // Destructor que libera memoria alocada de uma struct VehicleData
 bool freeVehicleData(VehicleData* vData) {
 	if (vData == NULL) return false;

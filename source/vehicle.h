@@ -64,6 +64,15 @@ bool freeVehicleData(VehicleData* vData);
 
 
 /****
+ * Transfere os dados de um arquivo binário para uma estrutura VehicleData
+ * Caso o binário seja invalido retorna NULL
+ * 
+ * @param bin Arquivo binário com os dados
+ * @return VehicleData* estrutura na memoria com os dados alocados
+ */
+VehicleData* readVehicleBinary(FILE* bin);
+
+/****
  * Transfere os dados de uma VehicleData para um arquivo binario seguindo as regras passadas nas especificaçẽos
  * 
  * @param vData struct a ser transferida
@@ -102,6 +111,6 @@ void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,v
  * 
  * @param vReg registro a ser verificado 
  */
-void selectVehicle(VehicleData* vData) {
+void selectVehicle(VehicleData* vData);
 
 #endif
