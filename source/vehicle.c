@@ -208,6 +208,15 @@ void appendVehicleRegisters(VehicleData* vData,int qty){
 		VehicleReg* curReg = &(vData->registers[i]);
 
 		scanf("\"%[^\"]\"",curReg->prefix);
+
+		if (cReg->prefix[0] != '*') {
+			cReg->isPresent = true;
+			vData->header.regQty++;
+		} else {
+			cReg->isPresent = false;
+			vData->header.regRemovedQty++;
+		}
+
 		scanf("\"%[^\"]\"",curReg->data);
 		if(strncmp(curReg->data,"NULO",4) == 0){
 			memcpy(curReg->data,"\0@@@@@@@@@",10);
