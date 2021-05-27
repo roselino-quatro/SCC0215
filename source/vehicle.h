@@ -88,6 +88,17 @@ void writeVehicleBinary(VehicleData* vData,FILE* binDest);
 void appendVehicleRegisters(VehicleData* vData,int qty);
 
 /****
+ * Escreve os registros de start até end no final arquivo binário
+ * 
+ * @param vData struct com os registros
+ * @param start posicao do 1o registro a ser escrito
+ * @param end posicao do ultimo registro a ser escrito
+ * @param bin arquivo binario onde os dados vao ser concatenados
+ */
+void insertVehicleRegisters(VehicleData* vData,int start,int end,FILE* bin);
+
+
+/****
  * Imprime informações do registro de veiculo
  * 
  * @param vReg registro a ser impresso
