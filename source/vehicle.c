@@ -200,6 +200,43 @@ void writeVehicleBinary(VehicleData* vData,FILE* binDest){
 	fwrite(&vData->header.isStable,sizeof(char),1,binDest);
 }
 
+void appendVehicleRegisters(VehicleData* vData,int qty){
+	int newRegQty = vData->regQty+qty;
+
+	vData->registers = realloc(vData->registers,newRegQty+1);
+	for (int i = vData->regQty; i < newRegQty; i++){
+		VehicleReg* curReg = &(vData->registers[i]);
+
+		scanf("\"%[^\"]\"",curReg->prefix);
+		scanf("\"%[^\"]\"",curReg->data);
+		if(strncmp(curReg->data,"NULO",4) == 0){
+			memcpy(curReg->data,"\0@@@@@@@@@",10);
+		}
+
+		curReg->seatQty = -1;
+		scanf("%d,",&curReg->seatQty);
+
+		curReg->lineCode = -1;
+		scanf("%d,",&curReg->lineCode);
+
+		scanf("\"%[^\"]\"",curReg->model);
+		curReg->modelSize = strlen(curReg->model);
+		if(strncmp(curReg->model,"NULO",4) == 0){
+			curReg->model[0] = '\0';
+			curReg->modelSize = 0;
+		}
+
+		scanf("\"%[^\"]\"\n",curReg->category);
+		curReg->categorySize = strlen(curReg->category);
+		if(strncmp(curReg->category,"NULO",4) == 0){
+			curReg->category[0] = '\0';
+			curReg->categorySize = 0;
+		}
+	}
+	
+	vData->regQty = newRegQty;
+}
+
 // Imprime informações do registro de veiculo
 void displayVehicle(VehicleReg* vReg) {
 	printf("Prefixo do veiculo: %s\n",vReg->prefix);

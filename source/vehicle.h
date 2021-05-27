@@ -55,15 +55,6 @@ typedef struct VEHICLE_DATA {
 VehicleData* readVehicleCsv(FILE* csv);
 
 /****
- * Destructor que libera memoria alocada de uma struct VehicleData
- * 
- * @param vData ponteiro para struct a ser liberada
- * @return boolean para caso a função tenha sucesso ou não
- */
-bool freeVehicleData(VehicleData* vData);
-
-
-/****
  * Transfere os dados de um arquivo binário para uma estrutura VehicleData
  * Caso o binário seja invalido retorna NULL
  * 
@@ -73,12 +64,29 @@ bool freeVehicleData(VehicleData* vData);
 VehicleData* readVehicleBinary(FILE* bin);
 
 /****
+ * Destructor que libera memoria alocada de uma struct VehicleData
+ * 
+ * @param vData ponteiro para struct a ser liberada
+ * @return boolean para caso a função tenha sucesso ou não
+ */
+bool freeVehicleData(VehicleData* vData);
+
+/****
  * Transfere os dados de uma VehicleData para um arquivo binario seguindo as regras passadas nas especificaçẽos
  * 
  * @param vData struct a ser transferida
  * @param binDest arquivo alvo
  */
 void writeVehicleBinary(VehicleData* vData,FILE* binDest);
+
+/****
+ * Adiciona registros lidos na stdin para os registros de vData
+ * 
+ * @param vData struct a receber os registros
+ * @param qty quantidade de registros a serem lidos
+ */
+void appendVehicleRegisters(VehicleData* vData,int qty);
+
 /****
  * Imprime informações do registro de veiculo
  * 
