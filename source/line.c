@@ -1,5 +1,57 @@
 #include "line.h"
 
+LInfo* LInfoFromString(char* src,char* delim){
+	LInfo* info = malloc(sizeof(LInfo));
+	info->stable = '0';
+	info->byteOffset = 83;
+	info->qty = 0;
+	info->rmvQty = 0;
+
+	char** fields = getFields(4,src);
+	memcpyField(info->code,fields[0],15);
+	memcpyField(info->card,fields[1],13);
+	memcpyField(info->name,fields[2],13);
+	memcpyField(info->line,fields[3],24);
+
+	int pos = 0;
+	while(fields[pos]) free(fields[pos++]);
+	free(fields);
+
+	return info;
+}
+
+LInfo* LInfoFromBytes(char* bytes){
+	LInfo* info = malloc(sizeof(LInfo));
+
+	int shift = 0;
+	shift += memcpyField(&info->stable,bytes+shift,sizeof(char));
+	shift += memcpyField(&info->byteOffset,bytes+shift,sizeof(long));
+	shift += memcpyField(&info->qty,bytes+shift,sizeof(int));
+	shift += memcpyField(&info->rmvQty,bytes+shift,sizeof(int));
+	shift += memcpyField(info->code,bytes+shift,15*sizeof(char));
+	shift += memcpyField(info->card,bytes+shift,13*sizeof(char));
+	shift += memcpyField(info->name,bytes+shift,13*sizeof(char));
+	shift += memcpyField(info->line,bytes+shift,24*sizeof(char));
+
+	return info;
+}
+
+char* LInfoAsBytes(LInfo* info){
+	char* bytes = malloc(84);
+
+	int shift = 0;
+	shift += memcpyField(bytes+shift,&info->stable,sizeof(char));
+	shift += memcpyField(bytes+shift,&info->byteOffset,sizeof(long));
+	shift += memcpyField(bytes+shift,&info->qty,sizeof(int));
+	shift += memcpyField(bytes+shift,info->code,15*sizeof(char));
+	shift += memcpyField(bytes+shift,info->card,13*sizeof(char));
+	shift += memcpyField(bytes+shift,info->name,13*sizeof(char));
+	shift += memcpyField(bytes+shift,info->line,24*sizeof(char));
+	shift += memcpyField(bytes+shift,info->line,26*sizeof(char));
+
+	return bytes;
+}
+
 // Lê e parsea o CSV do arquivo e armazena em uma struct
 LTable* readLineCsv(FILE* csv){
 	if(csv == NULL) {
