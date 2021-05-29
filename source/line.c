@@ -1,6 +1,6 @@
 #include "line.h"
 
-LInfo* LInfoFromString(char* src,char* delim){
+LInfo* LInfoFromString(char* src){
 	LInfo* info = malloc(sizeof(LInfo));
 	info->stable = '0';
 	info->byteOffset = 83;
@@ -135,68 +135,50 @@ char* LEntryAsBytes(LEntry* entry){
 // Lê e parsea o CSV do arquivo e armazena em uma struct
 LTable* readLineCsv(FILE* csv){
 	if(csv == NULL) {
-		printf("Falha no processamentodo arquivo.\n");
+		printf("Falha no processamento do arquivo.\n");
 		return NULL;
 	}
-	LTable* lData = malloc(sizeof(LTable));
 
-	// Initialize and read header from csv file
-	lData->header->stable = true;
-	lData->header->byteOffset = 81;
-	lData->header->qty = 0;
-	lData->header->rmvQty = 0;
+	LTable* table = malloc(sizeof(LTable));
 
-	fscanf(csv,"%[^,],",lData->header->code);
-	fscanf(csv,"%[^,],",lData->header->card);
-	fscanf(csv,"%[^,],",lData->header->name);
-	fscanf(csv,"%[^\n]\n",lData->header->line);
+	char* headerString = readline(csv);
+	LInfo* info = LInfoFromString(headerString);
+	free(headerString);
 
-	// While there are registers in the csv, allocate and process
-	lData->regQty = 1;
-	lData->registers = malloc(lData->regQty * sizeof(LEntry));
-	int rpos = 0;
-	char code[4];
-	while (fscanf(csv,"%[^,],",code) != EOF) {
-		if (rpos+1 == lData->regQty){
-			lData->regQty *= 2;
-			lData->registers = realloc(lData->registers,lData->regQty * sizeof(LEntry));
+	// While there are entries in the csv, allocate and process
+	table->qty = 1;
+	table->fleet = NULL;
+	int i = 0;
+	// char* entryString = readline(csv);
+	char* entryString;
+	while((entryString = readline(csv)) != NULL){
+		if(i+1 == table->qty){
+			table->qty *= 2;
+			table->fleet = realloc(table->fleet,table->qty * sizeof(LEntry));
 		}
 
-		LEntry* cReg = &lData->registers[rpos++];
-		if (code[0] != '*') {
-			cReg->lineCode = atoi(code);
-			cReg->isPresent = true;
-		} else {
-			cReg->lineCode = atoi(&code[1]);
-			cReg->isPresent = false;
-		}
-		
-		fscanf(csv,"%c,",&cReg->card);
-
-		fscanf(csv,"%[^,],",cReg->name);
-		cReg->nameLen = strlen(cReg->name);
-		if(strncmp(cReg->name,"NULO",4) == 0){
-			cReg->name[0] = '\0';
-			cReg->nameLen = 0;
-		}
-		
-		fscanf(csv,"%[^\n]\n",cReg->color);
-		cReg->colorLen = strlen(cReg->color);
-		cReg->size = 23 + cReg->nameLen + cReg->colorLen;
+		LEntry* entry = LEntryFromString(entryString);
+		table->fleet[i] = *entry;
+		free(entry);
+		(table->fleet[i].isPresent == '1')? ++info->qty : ++info->rmvQty;
+		info->byteOffset += table->fleet[i++].size;
+		free(entryString);
 	}
 
-	// Shrink registers array back to appropriate size
-	lData->regQty = rpos;
-	lData->registers = realloc(lData->registers,(lData->regQty) * sizeof(LEntry));
-	return lData;
+	// Bind info to table header and fit fleet to size
+	table->qty = i;
+	info->stable = '1';
+	table->header = info;
+	table->fleet = realloc(table->fleet,table->qty * sizeof(LEntry));
+	return table;
 }
 
 // Destructor que libera memoria alocada de uma struct LTable
-bool freeLineData(LTable* lData) {
-	if (lData == NULL) return false;
+bool freeLineData(LTable* table) {
+	if (table == NULL) return false;
 
-	free(lData->registers);
-	free(lData);
+	free(table->entries);
+	free(table);
 
 	return true;
 }
@@ -219,19 +201,19 @@ LTable* readLineBinary(FILE* bin) {
 	memcpy(&lData->header->name,&header[45],13);
 	memcpy(&lData->header->line,&header[58],24);
 
-	// Iterate through registers and write their data
+	// Iterate through entries and write their data
 	lData->regQty = 1;
-	lData->registers = malloc(lData->regQty * sizeof(LEntry));
+	lData->entries = malloc(lData->regQty * sizeof(LEntry));
 	int rpos = 0;
 	char regBuffer[14];
 	while (fread(&regBuffer,sizeof(char),14,bin) != 0) {
 		// Exponential reallocation check on every entry
 		if (rpos+1 == lData->regQty){
 			lData->regQty *= 2;
-			lData->registers = realloc(lData->registers,lData->regQty * sizeof(LEntry));
+			lData->entries = realloc(lData->entries,lData->regQty * sizeof(LEntry));
 		}
 
-		LEntry* cReg = &lData->registers[rpos++];
+		LEntry* cReg = &lData->entries[rpos++];
 
 		memcpy(&cReg->isPresent,&regBuffer[0], sizeof(char));
 		memcpy(&cReg->size,&regBuffer[1], sizeof(int));
@@ -265,10 +247,10 @@ void writeLineBinary(LTable* lData,FILE* binDest){
 	fwrite(&lData->header->name, sizeof(char), 13, binDest);
 	fwrite(&lData->header->line, sizeof(char), 24, binDest);
 
-	// Iterate through registers and write their data
+	// Iterate through entries and write their data
 	int regpos = 0;
 	while (regpos < lData->regQty){
-		LEntry* curReg = &lData->registers[regpos++];
+		LEntry* curReg = &lData->entries[regpos++];
 		fwrite(&curReg->isPresent, sizeof(char), 1, binDest);
 		fwrite(&curReg->size, sizeof(int), 1, binDest);
 		fwrite(&curReg->lineCode, sizeof(int), 1, binDest);
@@ -331,7 +313,7 @@ void selectLineWhere(LTable* lData,void* key,bool (*match)(LEntry*,void*)) {
 	bool anyMatched = false;
 	int regPos = 0;
 	while(regPos < lData->regQty) {
-		LEntry* curReg = &lData->registers[regPos++];
+		LEntry* curReg = &lData->entries[regPos++];
 		if (!curReg->isPresent) continue;
 
 		if (match(curReg,key)) {
@@ -353,7 +335,7 @@ void selectLine(LTable* lData) {
 	bool anyMatched = false;
 	int regPos = 0;
 	while(regPos < lData->regQty) {
-		LEntry* curReg = &lData->registers[regPos++];
+		LEntry* curReg = &lData->entries[regPos++];
 		if (curReg->isPresent) {
 			displayLine(curReg);
 			anyMatched = true;

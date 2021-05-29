@@ -31,7 +31,7 @@ typedef struct _LineHeader{
 typedef struct _LineTable{
 	LInfo* header;
 	int regQty;
-	LEntry* registers;
+	LEntry* entries;
 }LTable;
 
 /****
