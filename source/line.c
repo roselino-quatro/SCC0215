@@ -226,7 +226,7 @@ LTable* readLineBinary(FILE* bin) {
 }
 
 // Transfere os dados de uma LTable para um arquivo binario seguindo as regras passadas nas especificaçẽos
-void writeLineBinary(LTable* table,FILE* binDest){
+void writeLineBinary(LTable* table,FILE* bin){
 	if(bin == NULL){
 		printf("Falha no processamento do arquivo\n");
 		return;
