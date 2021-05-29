@@ -65,7 +65,7 @@ LEntry* LEntryFromString(char* src,char* delim){
 		entry->isPresent = '0';
 	};
 
-	entry->card = *fields[1];
+	entry->card = (strlen(fields[1]) == 1)? *fields[1] : '*';
 	
 
 	strcpy(entry->name,fields[2]);
@@ -271,6 +271,7 @@ bool matchLineCode(LEntry* entry,void* code) {
 };
 
 bool matchLineAcceptCard(LEntry* entry,void* cardStatus) {
+	if(entry->card == '*') return false;
 	return (entry->card == *(char*)cardStatus)? true : false;
 };
 
