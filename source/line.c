@@ -52,7 +52,7 @@ char* LInfoAsBytes(LInfo* info){
 	return bytes;
 }
 
-LEntry* LEntryFromString(char* src,char* delim){
+LEntry* LEntryFromString(char* src){
 	LEntry* entry = malloc(sizeof(LEntry));
 	entry->size = 14;
 
