@@ -174,7 +174,7 @@ LTable* readLineCsv(FILE* csv){
 }
 
 // Destructor que libera memoria alocada de uma struct LTable
-bool freeLineData(LTable* table) {
+bool freeLineTable(LTable* table){
 	if (table == NULL) return false;
 
 	free(table->header);
@@ -184,7 +184,7 @@ bool freeLineData(LTable* table) {
 	return true;
 }
 
-LTable* readLineBinary(FILE* bin) {
+LTable* readLineBinary(FILE* bin){
 	if(bin == NULL){
 		printf("Falha no processamento do arquivo\n");
 		return NULL;
@@ -266,28 +266,28 @@ void displayLine(LEntry* entry){
 };
 
 // Familia de funções para a selectLineWhere
-bool matchLineCode(LEntry* entry,void* code) {
+bool matchLineCode(LEntry* entry,void* code){
 	return (entry->lineCode == *(int*)code)? true : false;
 };
 
-bool matchLineAcceptCard(LEntry* entry,void* cardStatus) {
+bool matchLineAcceptCard(LEntry* entry,void* cardStatus){
 	if(entry->card == '*') return false;
 	return (entry->card == *(char*)cardStatus)? true : false;
 };
 
-bool matchLineName(LEntry* entry,void* name) {
+bool matchLineName(LEntry* entry,void* name){
 	if (entry->name[0] == '\0') return false;
 	return (strcmp(entry->name,(char*)name) == 0)? true : false;
 };
 
-bool matchLineColor(LEntry* entry,void* color) {
+bool matchLineColor(LEntry* entry,void* color){
 	if (entry->color[0] == '\0') return false;
 	return (strcmp(entry->color,(char*)color) == 0)? true : false;
 };
 
 
 // Imprime todos os registros não removidos de uma struct
-void selectLine(LTable* table) {
+void selectLine(LTable* table){
 	if(table == NULL) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
@@ -307,7 +307,7 @@ void selectLine(LTable* table) {
 
 
 // Imprime os matchs de uma comparação dentro de uma struct Dat
-void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)) {
+void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)){
 	if(table == NULL) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
