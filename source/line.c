@@ -185,87 +185,67 @@ bool freeLineData(LTable* table) {
 }
 
 LTable* readLineBinary(FILE* bin) {
-	if(bin == NULL) return NULL;	// Caso arquivo passado seja invalido
+	if(bin == NULL){
+		printf("Falha no processamento do arquivo\n");
+		return NULL;
+	}
 
-	LTable* lData = malloc(sizeof(LTable));
+	LTable* table = malloc(sizeof(LTable));
 
-	// Read header data - mark the file as unstable until end of read
-	char header[82];
-	fread(&header,sizeof(char),82,bin);
+	char buffer[140];
+	fread(buffer,sizeof(char),83,bin);
+	LInfo* info = LInfoFromBytes(buffer);
 
-	lData->header->stable = false;
-	memcpy(&lData->header->byteOffset,&header[1],8);
-	memcpy(&lData->header->qty,&header[9],4);
-	memcpy(&lData->header->rmvQty,&header[13],4);
-	memcpy(&lData->header->code,&header[17],15);
-	memcpy(&lData->header->card,&header[32],13);
-	memcpy(&lData->header->name,&header[45],13);
-	memcpy(&lData->header->line,&header[58],24);
-
-	// Iterate through entries and write their data
-	lData->qty = 1;
-	lData->entries = malloc(lData->qty * sizeof(LEntry));
-	int rpos = 0;
-	char regBuffer[14];
-	while (fread(&regBuffer,sizeof(char),14,bin) != 0) {
-		// Exponential reallocation check on every entry
-		if (rpos+1 == lData->qty){
-			lData->qty *= 2;
-			lData->entries = realloc(lData->entries,lData->qty * sizeof(LEntry));
+	// Read all entries from binary file
+	table->qty = 1;
+	table->fleet = NULL;
+	int i = 0;
+	while(fread(buffer,sizeof(char),5,bin) != 0){
+		if(i+1 == table->qty){
+			table->qty *= 2;
+			table->fleet = realloc(table->fleet,table->qty * sizeof(LEntry));
 		}
 
-		LEntry* cReg = &lData->entries[rpos++];
+		int entrySize;
+		memcpy(&entrySize,&buffer[1],sizeof(int));
+		fread(&buffer[5],sizeof(char),entrySize,bin);
 
-		memcpy(&cReg->isPresent,&regBuffer[0], sizeof(char));
-		memcpy(&cReg->size,&regBuffer[1], sizeof(int));
-		memcpy(&cReg->lineCode,&regBuffer[5], sizeof(int));
-		memcpy(&cReg->card,&regBuffer[9], sizeof(char));
-		memcpy(&cReg->nameLen,&regBuffer[10], sizeof(int));
-
-		fread(&cReg->name,sizeof(char),cReg->nameLen,bin);
-		
-		fread(&cReg->colorLen,sizeof(int),1,bin);
-		fread(&cReg->color,sizeof(char),cReg->colorLen,bin);
+		LEntry* entry = LEntryFromBytes(buffer);
+		table->fleet[i++] = *entry;
+		free(entry);
+		// TEST: Removed entry count, if read binary header is not trustworthy, value will be wrong!
+		// TEST: Removed byteoffset count also
 	}
-	
-	// Rewind and mark file as stable
-	lData->header->stable = true;
-	lData->qty = rpos;
 
-	return lData;
+	// Bind info to table header and fit fleet to size
+	table->qty = i;
+	info->stable = '1';
+	table->header = info;
+	table->fleet = realloc(table->fleet,table->qty * sizeof(LEntry));
+	return table;
 }
 
 // Transfere os dados de uma LTable para um arquivo binario seguindo as regras passadas nas especificaçẽos
 void writeLineBinary(LTable* lData,FILE* binDest){
-	// Write header data - mark the file as unstable until end of write
-	lData->header->stable = false;
-	fwrite(&lData->header->stable, sizeof(char), 1, binDest);
-	fwrite(&lData->header->byteOffset, sizeof(long), 1, binDest);
-	fwrite(&lData->header->qty, sizeof(int), 1, binDest);
-	fwrite(&lData->header->rmvQty, sizeof(int), 1, binDest);
-	fwrite(&lData->header->code, sizeof(char), 15, binDest);
-	fwrite(&lData->header->card, sizeof(char), 13, binDest);
-	fwrite(&lData->header->name, sizeof(char), 13, binDest);
-	fwrite(&lData->header->line, sizeof(char), 24, binDest);
-
-	// Iterate through entries and write their data
-	int regpos = 0;
-	while (regpos < lData->qty){
-		LEntry* curReg = &lData->entries[regpos++];
-		fwrite(&curReg->isPresent, sizeof(char), 1, binDest);
-		fwrite(&curReg->size, sizeof(int), 1, binDest);
-		fwrite(&curReg->lineCode, sizeof(int), 1, binDest);
-		fwrite(&curReg->card, sizeof(char), 1, binDest);
-		fwrite(&curReg->nameLen, sizeof(int), 1, binDest);
-		fwrite(&curReg->name, sizeof(char), curReg->nameLen, binDest);
-		fwrite(&curReg->colorLen, sizeof(int), 1, binDest);
-		fwrite(&curReg->color, sizeof(char), curReg->colorLen, binDest);
+	if(bin == NULL){
+		printf("Falha no processamento do arquivo\n");
+		return;
 	}
 
-	// Rewind and mark file as stable
-	rewind(binDest);
-	lData->header->stable = true;
-	fwrite(&lData->header->stable,1,1,binDest);
+	// Write header data - mark the file as unstable until end of write
+	table->header->stable = '0';
+	char* header = LInfoAsBytes(table->header);
+	fwrite(header,sizeof(char),83,bin);
+	free(header);
+
+	for(int i = 0;i < table->qty;i++){
+		char* entry = LEntryAsBytes(&table->fleet[i]);
+		fwrite(entry,sizeof(char),table->fleet[i].size,bin);
+		free(entry);
+	}
+
+	rewind(bin);
+	fwrite("1",sizeof(char),1,bin);
 }
 
 void displayLine(LEntry* lReg){
