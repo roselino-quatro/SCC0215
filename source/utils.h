@@ -8,7 +8,7 @@
 
 
 /****
- * Lê uma string e a separa em pedaços de acordo com delims.
+ * Lê uma string e copia seus campos separados por , (formato csv).
  * Não altera a string original de qualquer forma.
  * 
  * @param qty Quantidade de campos a extrair

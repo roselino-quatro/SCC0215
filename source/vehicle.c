@@ -61,7 +61,6 @@ char* VInfoAsBytes(VInfo* info){
 
 VEntry* VEntryFromString(char* src,char* delim){
 	VEntry* entry = malloc(sizeof(VEntry));
-	// entry->size = 36;
 	entry->size = 36;
 
 	char** fields = getFields(6,src);
@@ -371,7 +370,7 @@ void insertVehicleEntries(VTable* table,int qty,char* delim,FILE* bin){
 	fwrite("0",sizeof(char),1,bin);
 	fseek(bin,0,SEEK_END);
 
-	table->fleet = realloc(table->fleet,table->qty+qty);
+	table->fleet = realloc(table->fleet,(table->qty+qty)*sizeof(VEntry));
 	for(int i = 0;i < qty;i++){
 		char* entryString = readline(stdin);
 		cleanString(entryString);

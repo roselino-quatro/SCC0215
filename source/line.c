@@ -3,7 +3,7 @@
 LInfo* LInfoFromString(char* src){
 	LInfo* info = malloc(sizeof(LInfo));
 	info->stable = '0';
-	info->byteOffset = 83;
+	info->byteOffset = 82;
 	info->qty = 0;
 	info->rmvQty = 0;
 
@@ -43,18 +43,18 @@ char* LInfoAsBytes(LInfo* info){
 	shift += memcpyField(bytes+shift,&info->stable,sizeof(char));
 	shift += memcpyField(bytes+shift,&info->byteOffset,sizeof(long));
 	shift += memcpyField(bytes+shift,&info->qty,sizeof(int));
+	shift += memcpyField(bytes+shift,&info->rmvQty,sizeof(int));
 	shift += memcpyField(bytes+shift,info->code,15*sizeof(char));
 	shift += memcpyField(bytes+shift,info->card,13*sizeof(char));
 	shift += memcpyField(bytes+shift,info->name,13*sizeof(char));
 	shift += memcpyField(bytes+shift,info->line,24*sizeof(char));
-	shift += memcpyField(bytes+shift,info->line,26*sizeof(char));
 
 	return bytes;
 }
 
 LEntry* LEntryFromString(char* src){
 	LEntry* entry = malloc(sizeof(LEntry));
-	entry->size = 14;
+	entry->size = 18;
 
 	char** fields = getFields(4,src);
 	if(fields[0][0] != '*'){
@@ -65,7 +65,7 @@ LEntry* LEntryFromString(char* src){
 		entry->isPresent = '0';
 	};
 
-	entry->card = (strlen(fields[1]) == 1)? *fields[1] : '*';
+	entry->card = (strlen(fields[1]) == 1)? *fields[1] : '\0';
 	
 
 	strcpy(entry->name,fields[2]);
@@ -84,7 +84,7 @@ LEntry* LEntryFromString(char* src){
 		entry->colorLen = strlen(entry->color);
 	}
 
-	entry->size += entry->modelLen + entry->categoryLen;
+	entry->size += entry->nameLen + entry->colorLen;
 
 	int pos = 0;
 	while(fields[pos]) free(fields[pos++]);
@@ -99,13 +99,14 @@ LEntry* LEntryFromBytes(char* bytes){
 	shift += memcpyField(&entry->isPresent,bytes+shift,sizeof(char));
 	shift += memcpyField(&entry->size,bytes+shift,sizeof(int));
 	entry->size += 5;
-	shift += memcpyField(entry->lineCode,bytes+shift,sizeof(int));
-	shift += memcpyField(entry->card,bytes+shift,sizeof(char));
+	shift += memcpyField(&entry->lineCode,bytes+shift,sizeof(int));
+	shift += memcpyField(&entry->card,bytes+shift,sizeof(char));
 	shift += memcpyField(&entry->nameLen,bytes+shift,sizeof(int));
 	shift += memcpyField(entry->name,bytes+shift,entry->nameLen*sizeof(char));
-	shift += memcpyField(&entry->categoryLen,bytes+shift,sizeof(int));
-	shift += memcpyField(entry->category,bytes+shift,entry->categoryLen*sizeof(char));
-	entry->category[entry->categoryLen] = '\0';
+	entry->name[entry->nameLen] = '\0';
+	shift += memcpyField(&entry->colorLen,bytes+shift,sizeof(int));
+	shift += memcpyField(entry->color,bytes+shift,entry->colorLen*sizeof(char));
+	entry->color[entry->colorLen] = '\0';
 
 	return entry;
 }
@@ -118,8 +119,8 @@ char* LEntryAsBytes(LEntry* entry){
 	entry->size -= 5;	// size = all - isPresent - size
 	shift += memcpyField(bytes+shift,&entry->size,sizeof(int));
 	entry->size += 5;	// size = all others + isPresent + size
-	shift += memcpyField(bytes+shift,entry->lineCode,sizeof(int));
-	shift += memcpyField(bytes+shift,entry->card,sizeof(char));
+	shift += memcpyField(bytes+shift,&entry->lineCode,sizeof(int));
+	shift += memcpyField(bytes+shift,&entry->card,sizeof(char));
 	shift += memcpyField(bytes+shift,&entry->nameLen,sizeof(int));
 	if(entry->nameLen > 0){
 		shift += memcpyField(bytes+shift,entry->name,entry->nameLen*sizeof(char));
@@ -145,31 +146,31 @@ LTable* readLineCsv(FILE* csv){
 	LInfo* info = LInfoFromString(headerString);
 	free(headerString);
 
-	// While there are entries in the csv, allocate and process
+	// While there are lines in the csv, allocate and process
 	table->qty = 1;
-	table->fleet = NULL;
+	table->lines = NULL;
 	int i = 0;
 	// char* entryString = readline(csv);
 	char* entryString;
 	while((entryString = readline(csv)) != NULL){
 		if(i+1 == table->qty){
 			table->qty *= 2;
-			table->fleet = realloc(table->fleet,table->qty * sizeof(LEntry));
+			table->lines = realloc(table->lines,table->qty * sizeof(LEntry));
 		}
 
 		LEntry* entry = LEntryFromString(entryString);
-		table->fleet[i] = *entry;
+		table->lines[i] = *entry;
 		free(entry);
-		(table->fleet[i].isPresent == '1')? ++info->qty : ++info->rmvQty;
-		info->byteOffset += table->fleet[i++].size;
+		(table->lines[i].isPresent == '1')? ++info->qty : ++info->rmvQty;
+		info->byteOffset += table->lines[i++].size;
 		free(entryString);
 	}
 
-	// Bind info to table header and fit fleet to size
+	// Bind info to table header and fit lines to size
 	table->qty = i;
 	info->stable = '1';
 	table->header = info;
-	table->fleet = realloc(table->fleet,table->qty * sizeof(LEntry));
+	table->lines = realloc(table->lines,table->qty * sizeof(LEntry));
 	return table;
 }
 
@@ -178,7 +179,7 @@ bool freeLineTable(LTable* table){
 	if (table == NULL) return false;
 
 	free(table->header);
-	free(table->entries);
+	free(table->lines);
 	free(table);
 
 	return true;
@@ -193,17 +194,17 @@ LTable* readLineBinary(FILE* bin){
 	LTable* table = malloc(sizeof(LTable));
 
 	char buffer[140];
-	fread(buffer,sizeof(char),83,bin);
+	fread(buffer,sizeof(char),82,bin);
 	LInfo* info = LInfoFromBytes(buffer);
 
-	// Read all entries from binary file
+	// Read all lines from binary file
 	table->qty = 1;
-	table->fleet = NULL;
+	table->lines = NULL;
 	int i = 0;
 	while(fread(buffer,sizeof(char),5,bin) != 0){
 		if(i+1 == table->qty){
 			table->qty *= 2;
-			table->fleet = realloc(table->fleet,table->qty * sizeof(LEntry));
+			table->lines = realloc(table->lines,table->qty * sizeof(LEntry));
 		}
 
 		int entrySize;
@@ -211,17 +212,17 @@ LTable* readLineBinary(FILE* bin){
 		fread(&buffer[5],sizeof(char),entrySize,bin);
 
 		LEntry* entry = LEntryFromBytes(buffer);
-		table->fleet[i++] = *entry;
+		table->lines[i++] = *entry;
 		free(entry);
 		// TEST: Removed entry count, if read binary header is not trustworthy, value will be wrong!
 		// TEST: Removed byteoffset count also
 	}
 
-	// Bind info to table header and fit fleet to size
+	// Bind info to table header and fit lines to size
 	table->qty = i;
 	info->stable = '1';
 	table->header = info;
-	table->fleet = realloc(table->fleet,table->qty * sizeof(LEntry));
+	table->lines = realloc(table->lines,table->qty * sizeof(LEntry));
 	return table;
 }
 
@@ -235,12 +236,12 @@ void writeLineBinary(LTable* table,FILE* bin){
 	// Write header data - mark the file as unstable until end of write
 	table->header->stable = '0';
 	char* header = LInfoAsBytes(table->header);
-	fwrite(header,sizeof(char),83,bin);
+	fwrite(header,sizeof(char),82,bin);
 	free(header);
 
 	for(int i = 0;i < table->qty;i++){
-		char* entry = LEntryAsBytes(&table->fleet[i]);
-		fwrite(entry,sizeof(char),table->fleet[i].size,bin);
+		char* entry = LEntryAsBytes(&table->lines[i]);
+		fwrite(entry,sizeof(char),table->lines[i].size,bin);
 		free(entry);
 	}
 
@@ -251,11 +252,12 @@ void writeLineBinary(LTable* table,FILE* bin){
 void displayLine(LEntry* entry){
 	if(!entry) return;
 
+	printf("Codigo da linha: %d\n",entry->lineCode);
 	printf("Nome da linha: %s\n",(entry->nameLen != 0)? entry->name : "campo com valor nulo");
 	printf("Cor que descreve a linha: %s\n",entry->color);
 
 	if(entry->card == 'S'){
-		printf("Aceita cartao: PAGAMENTO  SOMENTE  COM  CARTAO  SEM  PRESENCA  DE COBRADOR\n\n");
+		printf("Aceita cartao: PAGAMENTO SOMENTE COM CARTAO SEM PRESENCA DE COBRADOR\n\n");
 	} else if(entry->card == 'N'){
 		printf("Aceita cartao: PAGAMENTO EM CARTAO E DINHEIRO\n\n");
 	} else if(entry->card == 'F'){
@@ -271,7 +273,7 @@ bool matchLineCode(LEntry* entry,void* code){
 };
 
 bool matchLineAcceptCard(LEntry* entry,void* cardStatus){
-	if(entry->card == '*') return false;
+	if(entry->card == '\0') return false;
 	return (entry->card == *(char*)cardStatus)? true : false;
 };
 
@@ -295,7 +297,7 @@ void selectLine(LTable* table){
 
 	bool anyMatched = false;
 	for(int i = 0;i < table->qty;i++){
-		LEntry* entry = &table->entries[i];
+		LEntry* entry = &table->lines[i];
 		if(entry->isPresent == '0') continue;
 
 		displayLine(entry);
@@ -315,8 +317,8 @@ void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)){
 
 	bool anyMatched = false;
 	for(int i = 0;i < table->qty;i++){
-		LEntry* entry = &table->entries[i];
-		if (entry->isPresent == '0' || !(match(entry,key)) continue;
+		LEntry* entry = &table->lines[i];
+		if (entry->isPresent == '0' || !(match(entry,key))) continue;
 
 		displayLine(entry);
 		anyMatched = true;
@@ -330,10 +332,11 @@ void insertLineEntries(LTable* table,int qty,FILE* bin){
 	fwrite("0",sizeof(char),1,bin);
 	fseek(bin,0,SEEK_END);
 
-	table->fleet = realloc(table->fleet,table->qty+qty);
+	table->lines = realloc(table->lines,(table->qty+qty)*sizeof(LEntry));
 	for(int i = 0;i < qty;i++){
 		char* entryString = readline(stdin);
 		cleanString(entryString);
+		printf("Inserindo: %s\n",entryString);
 		LEntry* entry = LEntryFromString(entryString);
 		table->header->byteOffset += entry->size;
 
@@ -342,8 +345,9 @@ void insertLineEntries(LTable* table,int qty,FILE* bin){
 
 		(entry->isPresent == '1')? ++table->header->qty : ++table->header->rmvQty;
 
-		table->fleet[i] = *entry;
+		table->lines[i] = *entry;
 		free(entry);
+		printf("Feito\n");
 	}
 
 	table->qty += qty;

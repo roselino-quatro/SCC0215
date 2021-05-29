@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include "utils.h"
 
 typedef struct _LineInfo{
-	bool stable;
+	char stable;
 	long byteOffset;
 	int qty;
 	int rmvQty;
@@ -18,7 +19,7 @@ typedef struct _LineInfo{
 }LInfo;
 
 typedef struct _LineHeader{
-	bool isPresent;
+	char isPresent;
 	int size;
 	int lineCode;
 	char card;
@@ -31,7 +32,7 @@ typedef struct _LineHeader{
 typedef struct _LineTable{
 	LInfo* header;
 	int qty;
-	LEntry* entries;
+	LEntry* lines;
 }LTable;
 
 /****
