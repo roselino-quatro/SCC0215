@@ -6,33 +6,33 @@
 #include <string.h>
 #include <stdbool.h>
 
-typedef struct LINE_HEADER {
-	bool isStable;
-	long regByteOff;
-	int regQty;
-	int regRemovedQty;
-	char descCode[15];
-	char descCard[13];
-	char descName[13];
-	char descLine[24];
-}LineHeader;
+typedef struct _LineInfo{
+	bool stable;
+	long byteOffset;
+	int qty;
+	int rmvQty;
+	char code[15];
+	char card[13];
+	char name[13];
+	char line[24];
+}LInfo;
 
-typedef struct LINE_REGISTER {
+typedef struct _LineHeader{
 	bool isPresent;
-	int regSize;
+	int size;
 	int lineCode;
-	char acceptsCard;
-	int nameSize;
+	char card;
+	int nameLen;
 	char name[100];
-	int colorSize;
+	int colorLen;
 	char color[100];
-}LineReg;
+}LEntry;
 
-typedef struct LINE_DATA {
-	LineHeader header;
-	int regQty;
-	LineReg* registers;
-}LineData;
+typedef struct _LineTable{
+	LInfo* header;
+	int qty;
+	LEntry* entries;
+}LTable;
 
 /****
  * Lê e parsea o CSV do arquivo e armazena em uma struct
@@ -40,38 +40,39 @@ typedef struct LINE_DATA {
  * @param csv ponteiro para o arquivo a ser lido
  * @return ponteiro para a struct allocada na função
  */
-LineData* readLineCsv(FILE* csv);
+LTable* readLineCsv(FILE* csv);
 
 /****
- * Destructor que libera memoria alocada de uma struct LineData
+ * Transfere os dados de um arquivo binário para uma estrutura LTable
+ * Caso o binário seja invalido retorna NULL
  * 
- * @param lData ponteiro para struct a ser liberada
+ * @param bin Arquivo binário com os dados
+ * @return LTable* estrutura na memoria com os dados alocados
+ */
+
+LTable* readLineBinary(FILE* bin);
+/****
+ * Destructor que libera memoria alocada de uma struct LTable
+ * 
+ * @param table ponteiro para struct a ser liberada
  * @return boolean para caso a função tenha sucesso ou não
  */
-bool freeLineData(LineData* lData);
-
-
-/****
- * Transfere os dados de uma LineData para um arquivo binario seguindo as regras passadas nas especificaçẽos
- * 
- * @param lData struct a ser transferida
- * @param binDest arquivo alvo
- */
-void writeLineBinary(LineData* lData,FILE* binDest);
-/****
- * Imprime informações do registro de uma linha
- * 
- * @param lReg registro a ser impresso
- */
-void displayLine(LineReg* lReg);
+bool freeLineTable(LTable* table);
 
 /****
- * Destructor que libera memoria alocada de uma struct LineData
+ * Transfere os dados de uma LTable para um arquivo binario seguindo as regras passadas nas especificaçẽos
  * 
- * @param lData ponteiro para struct a ser liberada
- * @return boolean para caso a função tenha sucesso ou não
+ * @param table struct a ser transferida
+ * @param bin arquivo alvo
  */
-bool freeLineData(LineData* lData);
+void writeLineBinary(LTable* table,FILE* bin);
+
+/****
+ * Imprime a linha no formato especificado
+ * 
+ * @param entry linha a ser impressa
+ */
+void displayLine(LEntry* entry);
 
 /****
  * Familia de funções para a selectLineWhere
@@ -79,24 +80,36 @@ bool freeLineData(LineData* lData);
  * @param lReg registro a ser verificado
  * @param secondParameter valor a ser comparado
  */
-bool matchLineCode(LineReg* lReg,void* code);
-bool matchLineAcceptCard(LineReg* lReg,void* cardStatus);
-bool matchLineName(LineReg* lReg,void* name);
-bool matchLineColor(LineReg* lReg,void* color);
+bool matchLineCode(LEntry* lReg,void* code);
+bool matchLineAcceptCard(LEntry* lReg,void* cardStatus);
+bool matchLineName(LEntry* lReg,void* name);
+bool matchLineColor(LEntry* lReg,void* color);
+
 
 /****
- * Imprime os matchs de uma comparação dentro de uma struct Data
+ * Imprime todos as entradas dentro da table
  * 
- * @param lData struct a ser buscada
+ * @param table table com as linhas
+ */
+void selectLine(LTable* table);
+
+/****
+ * Imprime todos linhas, que possuem a chave procurada, numa table
+ * 
+ * @param table table com as linhas
+ * @param key valor a ser comparado em cada linha
  * @param match ponteiro de função para uma das funções match
  */
-void selectLineWhere(LineData* lData,void* key,bool (*match)(LineReg*,void*));
+void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*));
 
 /****
- * Imprime todos os registros não removidos de uma struct
+ * Lê entradas da stdin. Essas entradas são adicionadas na table e depois escritas no bin
  * 
- * @param lReg registro a ser verificado 
+ * @param table tabela a receber as novas entradas
+ * @param qty quantidade de entradas que vao ser lidas
+ * @param bin arquivo que vai receber as novas entradas
  */
-void selectLine(LineData* lData) {
+void insertLineEntries(LTable* table,int qty,FILE* bin);
+
 
 #endif
