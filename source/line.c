@@ -52,6 +52,86 @@ char* LInfoAsBytes(LInfo* info){
 	return bytes;
 }
 
+LEntry* LEntryFromString(char* src,char* delim){
+	LEntry* entry = malloc(sizeof(LEntry));
+	entry->size = 14;
+
+	char** fields = getFields(4,src);
+	if(fields[0][0] != '*'){
+		entry->lineCode = atoi(fields[0]);
+		entry->isPresent = '1';
+	} else {
+		entry->lineCode = atoi(&fields[0][1]);
+		entry->isPresent = '0';
+	};
+
+	entry->card = *fields[1];
+	
+
+	strcpy(entry->name,fields[2]);
+	if(!strncmp(entry->name,"NULO",4)){
+		entry->name[0] = '\0';
+		entry->nameLen = 0;
+	} else {
+		entry->nameLen = strlen(entry->name);
+	}
+
+	strcpy(entry->color,fields[3]);
+	if(!strncmp(entry->color,"NULO",4)){
+		entry->color[0] = '\0';
+		entry->colorLen = 0;
+	} else {
+		entry->colorLen = strlen(entry->color);
+	}
+
+	entry->size += entry->modelLen + entry->categoryLen;
+
+	int pos = 0;
+	while(fields[pos]) free(fields[pos++]);
+	free(fields);
+	return entry;
+}
+
+LEntry* LEntryFromBytes(char* bytes){
+	LEntry* entry = malloc(sizeof(LEntry));
+
+	int shift = 0;
+	shift += memcpyField(&entry->isPresent,bytes+shift,sizeof(char));
+	shift += memcpyField(&entry->size,bytes+shift,sizeof(int));
+	entry->size += 5;
+	shift += memcpyField(entry->lineCode,bytes+shift,sizeof(int));
+	shift += memcpyField(entry->card,bytes+shift,sizeof(char));
+	shift += memcpyField(&entry->nameLen,bytes+shift,sizeof(int));
+	shift += memcpyField(entry->name,bytes+shift,entry->nameLen*sizeof(char));
+	shift += memcpyField(&entry->categoryLen,bytes+shift,sizeof(int));
+	shift += memcpyField(entry->category,bytes+shift,entry->categoryLen*sizeof(char));
+	entry->category[entry->categoryLen] = '\0';
+
+	return entry;
+}
+
+char* LEntryAsBytes(LEntry* entry){
+	char* bytes = malloc(entry->size);
+
+	int shift = 0;
+	shift += memcpyField(bytes+shift,&entry->isPresent,sizeof(char));
+	entry->size -= 5;	// size = all - isPresent - size
+	shift += memcpyField(bytes+shift,&entry->size,sizeof(int));
+	entry->size += 5;	// size = all others + isPresent + size
+	shift += memcpyField(bytes+shift,entry->lineCode,sizeof(int));
+	shift += memcpyField(bytes+shift,entry->card,sizeof(char));
+	shift += memcpyField(bytes+shift,&entry->nameLen,sizeof(int));
+	if(entry->nameLen > 0){
+		shift += memcpyField(bytes+shift,entry->name,entry->nameLen*sizeof(char));
+	}
+	shift += memcpyField(bytes+shift,&entry->colorLen,sizeof(int));
+	if(entry->colorLen > 0){
+		shift += memcpyField(bytes+shift,entry->color,entry->colorLen*sizeof(char));
+	}
+
+	return bytes;
+}
+
 // Lê e parsea o CSV do arquivo e armazena em uma struct
 LTable* readLineCsv(FILE* csv){
 	if(csv == NULL) {
