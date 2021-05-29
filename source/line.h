@@ -30,7 +30,7 @@ typedef struct _LineHeader{
 
 typedef struct _LineTable{
 	LInfo* header;
-	int regQty;
+	int qty;
 	LEntry* entries;
 }LTable;
 

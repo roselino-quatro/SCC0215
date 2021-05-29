@@ -202,15 +202,15 @@ LTable* readLineBinary(FILE* bin) {
 	memcpy(&lData->header->line,&header[58],24);
 
 	// Iterate through entries and write their data
-	lData->regQty = 1;
-	lData->entries = malloc(lData->regQty * sizeof(LEntry));
+	lData->qty = 1;
+	lData->entries = malloc(lData->qty * sizeof(LEntry));
 	int rpos = 0;
 	char regBuffer[14];
 	while (fread(&regBuffer,sizeof(char),14,bin) != 0) {
 		// Exponential reallocation check on every entry
-		if (rpos+1 == lData->regQty){
-			lData->regQty *= 2;
-			lData->entries = realloc(lData->entries,lData->regQty * sizeof(LEntry));
+		if (rpos+1 == lData->qty){
+			lData->qty *= 2;
+			lData->entries = realloc(lData->entries,lData->qty * sizeof(LEntry));
 		}
 
 		LEntry* cReg = &lData->entries[rpos++];
@@ -229,7 +229,7 @@ LTable* readLineBinary(FILE* bin) {
 	
 	// Rewind and mark file as stable
 	lData->header->stable = true;
-	lData->regQty = rpos;
+	lData->qty = rpos;
 
 	return lData;
 }
@@ -249,7 +249,7 @@ void writeLineBinary(LTable* lData,FILE* binDest){
 
 	// Iterate through entries and write their data
 	int regpos = 0;
-	while (regpos < lData->regQty){
+	while (regpos < lData->qty){
 		LEntry* curReg = &lData->entries[regpos++];
 		fwrite(&curReg->isPresent, sizeof(char), 1, binDest);
 		fwrite(&curReg->size, sizeof(int), 1, binDest);
@@ -312,7 +312,7 @@ void selectLineWhere(LTable* lData,void* key,bool (*match)(LEntry*,void*)) {
 
 	bool anyMatched = false;
 	int regPos = 0;
-	while(regPos < lData->regQty) {
+	while(regPos < lData->qty) {
 		LEntry* curReg = &lData->entries[regPos++];
 		if (!curReg->isPresent) continue;
 
@@ -334,7 +334,7 @@ void selectLine(LTable* lData) {
 
 	bool anyMatched = false;
 	int regPos = 0;
-	while(regPos < lData->regQty) {
+	while(regPos < lData->qty) {
 		LEntry* curReg = &lData->entries[regPos++];
 		if (curReg->isPresent) {
 			displayLine(curReg);
