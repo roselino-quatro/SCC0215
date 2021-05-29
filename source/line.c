@@ -324,3 +324,32 @@ void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)) {
 
 	if (!anyMatched) printf("Registro inexistente\n");
 }
+
+void insertLineEntries(LTable* table,int qty,FILE* bin){
+	rewind(bin);	// Rewind and mark binary as unstable
+	fwrite("0",sizeof(char),1,bin);
+	fseek(bin,0,SEEK_END);
+
+	table->fleet = realloc(table->fleet,table->qty+qty);
+	for(int i = 0;i < qty;i++){
+		char* entryString = readline(stdin);
+		cleanString(entryString);
+		LEntry* entry = LEntryFromString(entryString);
+		table->header->byteOffset += entry->size;
+
+		char* entryBytes = LEntryAsBytes(entry);
+		fwrite(entryBytes,sizeof(char),entry->size,bin);
+
+		(entry->isPresent == '1')? ++table->header->qty : ++table->header->rmvQty;
+
+		table->fleet[i] = *entry;
+		free(entry);
+	}
+
+	table->qty += qty;
+	rewind(bin);	// Rewind and mark binary as stable
+	fwrite("1",sizeof(char),1,bin);
+	fwrite(&table->header->byteOffset,sizeof(long),1,bin);
+	fwrite(&table->header->qty,sizeof(int),1,bin);
+	fwrite(&table->header->rmvQty,sizeof(int),1,bin);
+}
