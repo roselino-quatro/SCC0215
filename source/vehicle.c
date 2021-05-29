@@ -7,7 +7,7 @@ VInfo* VInfoFromString(char* src,char* delim){
 	info->qty = 0;
 	info->rmvQty = 0;
 
-	char** fields = getFields(6,delim,src);
+	char** fields = getFields(6,src);
 	int shift = 0;
 	shift+= memcpyField(info->prefix,fields[0],18) + 1;
 	shift+= memcpyField(info->data,fields[1],35) + 1;
@@ -64,7 +64,7 @@ VEntry* VEntryFromString(char* src,char* delim){
 	// entry->size = 36;
 	entry->size = 36;
 
-	char** fields = getFields(6,delim,src);
+	char** fields = getFields(6,src);
 	memcpy(entry->prefix,fields[0],5);
 	if(entry->prefix[0] != '*'){
 		entry->isPresent = '1';
