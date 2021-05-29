@@ -1,67 +1,59 @@
 #ifndef _VEHICLE_H
 #define _VEHICLE_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
+#include "utils.h"
 
-// Cabecalhos:
-// 1 - nenhum byte da struct deve deve ficar vazio / padding!
-// 2 - quando escrever no arquivo não precisa por \0 nas strings
-typedef struct VEHICLES_HEADER {
-	bool isStable;
-	long regByteOff;
-	int regQty;
-	int regRemovedQty;
-	char descPrefix[18];
-	char descData[35];
-	char descSeats[42];
-	char descLine[26];
-	char descModel[17];
-	char descCategory[20];
-}VehicleHeader;
+// Cabecalho do arquivo binário / Informações sobre a frota
+typedef struct VehiclesInfo{
+	char stable;
+	long byteOffset;
+	int qty;
+	int rmvQty;
+	char prefix[18];
+	char data[35];
+	char seats[42];
+	char line[26];
+	char model[17];
+	char category[20];
+}VInfo;
 
-// Registros:
-// 1 - nao precisa por \0 quando escreve strings
-// 2 - prefix nao pode ser nulo
-// 3 - nulos para campos fixos: int = -1; string = "\0@@@@"
-// 4 - nulos para campos variaveis: tamanho = 0; string = null / nao escreve
-typedef struct VEHICLE_REGISTER {
-	bool isPresent;
-	int regSize;
+// Um registro de onibus na frota / Informações sobre 1 entrada no frota
+typedef struct VehicleEntry{
+	char isPresent;
+	int size;	// Size of all fields. When writing, subtract 5 to ignore first 2 (isPresent & size).
 	char prefix[5];
 	char data[10];
 	int seatQty;
 	int lineCode;
-	int modelSize;
+	int modelLen;
 	char model[100];
-	int categorySize;
+	int categoryLen;
 	char category[100];
-}VehicleReg;
+}VEntry;
 
-typedef struct VEHICLE_DATA {
-	VehicleHeader header;
-	int regQty;
-	VehicleReg* registers;
-}VehicleData;
-
-/****
- * Lê e parsea o CSV do arquivo e armazena em uma struct
- * 
- * @param csv ponteiro para o arquivo a ser lido
- * @return ponteiro para a struct allocada na função
- */
-VehicleData* readVehicleCsv(FILE* csv);
+// Status da frota inteira / Informações sobre metadados + todos registros da frota
+typedef struct VehiclesTable{
+	VInfo* header;
+	int qty;
+	VEntry* fleet;
+}VTable;
 
 /****
- * Transfere os dados de um arquivo binário para uma estrutura VehicleData
- * Caso o binário seja invalido retorna NULL
+ * Cria uma table a partir do csv
  * 
- * @param bin Arquivo binário com os dados
- * @return VehicleData* estrutura na memoria com os dados alocados
+ * @param csv arquivo csv com os dados formatados
+ * @return VTable* table com os dados carregados
  */
-VehicleData* readVehicleBinary(FILE* bin);
+VTable* readVehicleCsv(FILE* csv,char* delim);
+
+/****
+ * Cria uma tabela a partir de um arquivo binario
+ * 
+ * @param bin arquivo binario com os dados formatados
+ * @return VTable* table com os dados carregados
+ */
+VTable* readVehicleBinary(FILE* bin);
 
 /****
  * Destructor que libera memoria alocada de uma struct VehicleData
@@ -69,67 +61,58 @@ VehicleData* readVehicleBinary(FILE* bin);
  * @param vData ponteiro para struct a ser liberada
  * @return boolean para caso a função tenha sucesso ou não
  */
-bool freeVehicleData(VehicleData* vData);
+bool freeVTable(VTable* table);
 
 /****
- * Transfere os dados de uma VehicleData para um arquivo binario seguindo as regras passadas nas especificaçẽos
+ * Escreve a table, na formatação especificada, em um arquivo binario
  * 
- * @param vData struct a ser transferida
- * @param binDest arquivo alvo
+ * @param vData table com os dados
+ * @param bin arquivo a ser criado com os dados da tabela
  */
-void writeVehicleBinary(VehicleData* vData,FILE* binDest);
+void writeVehicleBinary(VTable* table,FILE* bin);
 
 /****
- * Adiciona registros lidos na stdin para os registros de vData
+ * Imprime o registro no formatado especificado
  * 
- * @param vData struct a receber os registros
- * @param qty quantidade de registros a serem lidos
+ * @param entry veiculo a ser impresso
  */
-void appendVehicleRegisters(VehicleData* vData,int qty);
-
-/****
- * Escreve os registros de start até end no final arquivo binário
- * 
- * @param vData struct com os registros
- * @param start posicao do 1o registro a ser escrito
- * @param end posicao do ultimo registro a ser escrito
- * @param bin arquivo binario onde os dados vao ser concatenados
- */
-void insertVehicleRegisters(VehicleData* vData,int start,int end,FILE* bin);
-
-
-/****
- * Imprime informações do registro de veiculo
- * 
- * @param vReg registro a ser impresso
- */
-void displayVehicle(VehicleReg* vReg);
+void displayVehicle(VEntry* entry);
 
 /****
  * Familia de funções para a selectVehicleWhere
  * 
- * @param vReg registro a ser verificado
+ * @param entry registro a ser verificado
  * @param secondParameter valor a ser comparado
  */
-bool matchVehiclePrefix(VehicleReg* vReg,void* prefix);
-bool matchVehicleData(VehicleReg* vReg,void* data);
-bool matchVehicleSeatQty(VehicleReg* vReg,void* seatQty);
-bool matchVehicleModel(VehicleReg* vReg,void* model);
-bool matchVehicleCategory(VehicleReg* vReg,void* category);
+bool matchVehiclePrefix(VEntry* entry,void* prefix);
+bool matchVehicleData(VEntry* entry,void* data);
+bool matchVehicleSeatQty(VEntry* entry,void* seatQty);
+bool matchVehicleModel(VEntry* entry,void* model);
+bool matchVehicleCategory(VEntry* entry,void* category);
 
 /****
- * Imprime os matchs de uma comparação dentro de uma struct Data
+ * Imprime todos veiculos de uma table
  * 
- * @param vData struct a ser buscada
+ * @param table table com os veiculos
+ */
+void selectVehicle(VTable* table);
+
+/****
+ * Imprime todos veiculos, que possuem a chave procurada, numa table
+ * 
+ * @param table table com os veiculos
+ * @param key valor a ser comparado em cada veiculo
  * @param match ponteiro de função para uma das funções match
  */
-void selectVehicleWhere(VehicleData* vData,void* key,bool (*match)(VehicleReg*,void*));
+void selectVehicleWhere(VTable* table,void* key,bool (*match)(VEntry*,void*));
 
 /****
- * Imprime todos os registros não removidos de uma struct
+ * Lê entradas da stdin. Essas entradas são adicionadas na table e depois escritas no bin
  * 
- * @param vReg registro a ser verificado 
+ * @param table tabela a receber as novas entradas
+ * @param qty quantidade de entradas que vao ser lidas
+ * @param delim caractere que vai separar os campos da entrada
+ * @param bin arquivo que vai receber as novas entradas
  */
-void selectVehicle(VehicleData* vData);
-
+void insertVehicleEntries(VTable* table,int qty,char* delim,FILE* bin);
 #endif
