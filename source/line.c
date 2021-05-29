@@ -248,17 +248,17 @@ void writeLineBinary(LTable* lData,FILE* binDest){
 	fwrite("1",sizeof(char),1,bin);
 }
 
-void displayLine(LEntry* lReg){
-	if(!lReg) return;
+void displayLine(LEntry* entry){
+	if(!entry) return;
 
-	printf("Nome da linha: %s\n",(lReg->nameLen != 0)? lReg->name : "campo com valor nulo");
-	printf("Cor que descreve a linha: %s\n",lReg->color);
+	printf("Nome da linha: %s\n",(entry->nameLen != 0)? entry->name : "campo com valor nulo");
+	printf("Cor que descreve a linha: %s\n",entry->color);
 
-	if(lReg->card == 'S'){
+	if(entry->card == 'S'){
 		printf("Aceita cartao: PAGAMENTO  SOMENTE  COM  CARTAO  SEM  PRESENCA  DE COBRADOR\n\n");
-	} else if(lReg->card == 'N'){
+	} else if(entry->card == 'N'){
 		printf("Aceita cartao: PAGAMENTO EM CARTAO E DINHEIRO\n\n");
-	} else if(lReg->card == 'F'){
+	} else if(entry->card == 'F'){
 		printf("Aceita cartao: PAGAMENTO EM CARTAO SOMENTE NO FINAL DE SEMANA\n\n");
 	} else{
 		printf("Aceita cartao: campo com valor nulo\n\n");
@@ -266,22 +266,22 @@ void displayLine(LEntry* lReg){
 };
 
 // Familia de funções para a selectLineWhere
-bool matchLineCode(LEntry* lReg,void* code) {
-	return (lReg->lineCode == *(int*)code)? true : false;
+bool matchLineCode(LEntry* entry,void* code) {
+	return (entry->lineCode == *(int*)code)? true : false;
 };
 
-bool matchLineAcceptCard(LEntry* lReg,void* cardStatus) {
-	return (lReg->card == *(char*)cardStatus)? true : false;
+bool matchLineAcceptCard(LEntry* entry,void* cardStatus) {
+	return (entry->card == *(char*)cardStatus)? true : false;
 };
 
-bool matchLineName(LEntry* lReg,void* name) {
-	if (lReg->name[0] == '\0') return false;
-	return (strcmp(lReg->name,(char*)name) == 0)? true : false;
+bool matchLineName(LEntry* entry,void* name) {
+	if (entry->name[0] == '\0') return false;
+	return (strcmp(entry->name,(char*)name) == 0)? true : false;
 };
 
-bool matchLineColor(LEntry* lReg,void* color) {
-	if (lReg->color[0] == '\0') return false;
-	return (strcmp(lReg->color,(char*)color) == 0)? true : false;
+bool matchLineColor(LEntry* entry,void* color) {
+	if (entry->color[0] == '\0') return false;
+	return (strcmp(entry->color,(char*)color) == 0)? true : false;
 };
 
 // Imprime os matchs de uma comparação dentro de uma struct Dat
