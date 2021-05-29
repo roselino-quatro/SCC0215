@@ -177,6 +177,7 @@ LTable* readLineCsv(FILE* csv){
 bool freeLineData(LTable* table) {
 	if (table == NULL) return false;
 
+	free(table->header);
 	free(table->entries);
 	free(table);
 
