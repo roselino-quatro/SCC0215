@@ -226,7 +226,7 @@ LTable* readLineBinary(FILE* bin) {
 }
 
 // Transfere os dados de uma LTable para um arquivo binario seguindo as regras passadas nas especificaçẽos
-void writeLineBinary(LTable* lData,FILE* binDest){
+void writeLineBinary(LTable* table,FILE* binDest){
 	if(bin == NULL){
 		printf("Falha no processamento do arquivo\n");
 		return;
@@ -285,16 +285,16 @@ bool matchLineColor(LEntry* entry,void* color) {
 };
 
 // Imprime os matchs de uma comparação dentro de uma struct Dat
-void selectLineWhere(LTable* lData,void* key,bool (*match)(LEntry*,void*)) {
-	if(lData == NULL) {
+void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)) {
+	if(table == NULL) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
 
 	bool anyMatched = false;
 	int regPos = 0;
-	while(regPos < lData->qty) {
-		LEntry* curReg = &lData->entries[regPos++];
+	while(regPos < table->qty) {
+		LEntry* curReg = &table->entries[regPos++];
 		if (!curReg->isPresent) continue;
 
 		if (match(curReg,key)) {
@@ -307,16 +307,16 @@ void selectLineWhere(LTable* lData,void* key,bool (*match)(LEntry*,void*)) {
 }
 
 // Imprime todos os registros não removidos de uma struct
-void selectLine(LTable* lData) {
-	if(lData == NULL) {
+void selectLine(LTable* table) {
+	if(table == NULL) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
 
 	bool anyMatched = false;
 	int regPos = 0;
-	while(regPos < lData->qty) {
-		LEntry* curReg = &lData->entries[regPos++];
+	while(regPos < table->qty) {
+		LEntry* curReg = &table->entries[regPos++];
 		if (curReg->isPresent) {
 			displayLine(curReg);
 			anyMatched = true;
