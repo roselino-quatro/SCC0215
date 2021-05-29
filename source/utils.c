@@ -1,5 +1,63 @@
 #include "utils.h"
 
+char** getFields(int qty,char* src){
+	char** fields = malloc((qty+1) *sizeof(char*));
+	char* field = src;
+
+	int pos = 0;
+	int len = strcspn(field,",");
+	while(len != 0){
+		fields[pos++] = strndup(field,len);
+		field = field + len + 1;	// Advance field pointer and skip the delim
+		if(*(field-1) == '\0') break;
+		len = strcspn(field,",");
+	}
+	
+	fields[pos] = NULL;
+	return fields;
+}
+
+int memcpyField(void* dest,const void* src,size_t n){
+	memcpy(dest,src,n);
+	return n;
+}
+
+#define READLINE_RATIO_ 1.5
+char* readline(FILE* fstream){
+	if(!fstream)	return NULL;
+	char* line = NULL;
+	int pos = 0, csize = 2;
+
+	do{
+		if (pos+2 == csize)	{csize *= READLINE_RATIO_; line = realloc(line, csize);};
+
+		line[pos] = fgetc(fstream);
+		if(line[pos] == '\r') pos--;	// Tratando \r - volta e sobrescreve no prox. loop
+	} while(line[pos++] != '\n' && !feof(fstream));
+	if(pos == 1) {free(line); return NULL;}; // Caso a stream só tenha '\0', retornar NULL
+
+	line[pos - 1] = '\0';
+	line = realloc(line, pos);
+	return line;
+}
+
+void cleanString(char* str){
+	if(str[0] == '\0') return;
+	char* cur = str, *nxt = str;
+	char inField = 0;	// inField state: true -> copy chars , false -> skip " and ' ' turns into ,
+
+	while(*(nxt+1) != '\0'){
+		if(*nxt == '\"'){	// " triggers inField state switch
+			inField = !inField;
+			nxt++;
+		} 
+
+		if(!inField && *nxt == ' ') *nxt = ','; // Every ' ' outside a field turns into ,
+		*cur++ = *nxt++;
+	}
+	*cur = '\0';
+}
+
 // Função fornecida binarioNaTela
 void binarioNaTela(char *nomeArquivoBinario) { /* Você não precisa entender o código dessa função. */
 
@@ -27,42 +85,6 @@ void binarioNaTela(char *nomeArquivoBinario) { /* Você não precisa entender o 
 	printf("%lf\n", (cs / (double) 100));
 	free(mb);
 	fclose(fs);
-}
-
-// Função fornecida scan_quote_string
-void scan_quote_string(char *str) {
-
-	/*
-	*	Use essa função para ler um campo string delimitado entre aspas (").
-	*	Chame ela na hora que for ler tal campo. Por exemplo:
-	*
-	*	A entrada está da seguinte forma:
-	*		nomeDoCampo "MARIA DA SILVA"
-	*
-	*	Para ler isso para as strings já alocadas str1 e str2 do seu programa, você faz:
-	*		scanf("%s", str1); // Vai salvar nomeDoCampo em str1
-	*		scan_quote_string(str2); // Vai salvar MARIA DA SILVA em str2 (sem as aspas)
-	*
-	*/
-
-	char R;
-
-	while((R = getchar()) != EOF && isspace(R)); // ignorar espaços, \r, \n...
-
-	if(R == 'N' || R == 'n') { // campo NULO
-		getchar(); getchar(); getchar(); // ignorar o "ULO" de NULO.
-		strcpy(str, ""); // copia string vazia
-	} else if(R == '\"') {
-		if(scanf("%[^\"]", str) != 1) { // ler até o fechamento das aspas
-			strcpy(str, "");
-		}
-		getchar(); // ignorar aspas fechando
-	} else if(R != EOF){ // vc tá tentando ler uma string que não tá entre aspas! Fazer leitura normal %s então, pois deve ser algum inteiro ou algo assim...
-		str[0] = R;
-		scanf("%s", &str[1]);
-	} else { // EOF
-		strcpy(str, "");
-	}
 }
 
 // Abre um arquivo tratando erros
