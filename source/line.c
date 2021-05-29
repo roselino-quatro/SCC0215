@@ -285,27 +285,6 @@ bool matchLineColor(LEntry* entry,void* color) {
 	return (strcmp(entry->color,(char*)color) == 0)? true : false;
 };
 
-// Imprime os matchs de uma comparação dentro de uma struct Dat
-void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)) {
-	if(table == NULL) {
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	}
-
-	bool anyMatched = false;
-	int regPos = 0;
-	while(regPos < table->qty) {
-		LEntry* curReg = &table->entries[regPos++];
-		if (!curReg->isPresent) continue;
-
-		if (match(curReg,key)) {
-			displayLine(curReg);
-			anyMatched = true;
-		}
-	}
-
-	if (!anyMatched) printf("Registro inexistente\n");
-}
 
 // Imprime todos os registros não removidos de uma struct
 void selectLine(LTable* table) {
@@ -315,13 +294,32 @@ void selectLine(LTable* table) {
 	}
 
 	bool anyMatched = false;
-	int regPos = 0;
-	while(regPos < table->qty) {
-		LEntry* curReg = &table->entries[regPos++];
-		if (curReg->isPresent) {
-			displayLine(curReg);
-			anyMatched = true;
-		}
+	for(int i = 0;i < table->qty;i++){
+		LEntry* entry = &table->entries[i];
+		if(entry->isPresent == '0') continue;
+
+		displayLine(entry);
+		anyMatched = true;
+	}
+
+	if (!anyMatched) printf("Registro inexistente\n");
+}
+
+
+// Imprime os matchs de uma comparação dentro de uma struct Dat
+void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)) {
+	if(table == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+
+	bool anyMatched = false;
+	for(int i = 0;i < table->qty;i++){
+		LEntry* entry = &table->entries[i];
+		if (entry->isPresent == '0' || !(match(entry,key)) continue;
+
+		displayLine(entry);
+		anyMatched = true;
 	}
 
 	if (!anyMatched) printf("Registro inexistente\n");
