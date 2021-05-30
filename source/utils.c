@@ -47,17 +47,23 @@ void cleanString(char* str){
 	if(str[0] == '\0') return;
 	char* cur = str, *nxt = str;
 	char inField = 0;	// inField state: true -> copy chars , false -> skip " and ' ' turns into ,
+	int hasQuotes = 0;
 
 	while(*(nxt+1) != '\0'){
 		if(*nxt == '\"'){	// " triggers inField state switch
 			inField = !inField;
+			hasQuotes = 1;
 			nxt++;
 		} 
 
 		if(!inField && *nxt == ' ') *nxt = ','; // Every ' ' outside a field turns into ,
 		*cur++ = *nxt++;
 	}
-	*cur = '\0';
+	if(hasQuotes == 1) {
+		*(cur) = '\0';
+	} else {
+		*(++cur) = '\0';
+	}
 }
 
 // Função fornecida binarioNaTela

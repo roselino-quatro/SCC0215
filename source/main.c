@@ -46,41 +46,51 @@ int main(){
 			case CREATE_VEHICLE:
 				cleanString(command);
 				arguments = getFields(3, command);
-				csvPointer = openFile(arguments[FILE_NAME], "rb");
+				csvPointer = openFile(arguments[FILE_NAME], "r");
 				free(arguments[FILE_NAME]);
 				binPointer = openFile(arguments[BIN_FILE_NAME], "wb");
 
 				vehiclesTable = readVehicleCsv(csvPointer, ",");
-				fclose(csvPointer);
-				writeVehicleBinary(vehiclesTable, binPointer);
-				fclose(binPointer);
-				freeVTable(vehiclesTable);
+				if(vehiclesTable != NULL) {
+					fclose(csvPointer);
+					writeVehicleBinary(vehiclesTable, binPointer);
+					freeVTable(vehiclesTable);
+					fclose(binPointer);
+					binarioNaTela(arguments[BIN_FILE_NAME]);
+				}
+				if(vehiclesTable == NULL) fclose(binPointer);
 				
-				binarioNaTela(arguments[BIN_FILE_NAME]);
 				free(arguments[BIN_FILE_NAME]);
 				free(arguments[0]);
+				free(arguments);
+
 				break;
 			case CREATE_LINE:
 				cleanString(command);
 				arguments = getFields(3, command);
-				csvPointer = openFile(arguments[FILE_NAME], "rb");
+				csvPointer = openFile(arguments[FILE_NAME], "r");
 				free(arguments[FILE_NAME]);
 				binPointer = openFile(arguments[BIN_FILE_NAME], "wb");
 
 				linesTable = readLineCsv(csvPointer);
-				fclose(csvPointer);
-				writeLineBinary(linesTable, binPointer);
-				fclose(binPointer);
-				freeLineTable(linesTable);
+				if(linesTable != NULL) {
+					fclose(csvPointer);
+					writeLineBinary(linesTable, binPointer);
+					freeLineTable(linesTable);
+					fclose(binPointer);
+					binarioNaTela(arguments[BIN_FILE_NAME]);
+				}
+				if(vehiclesTable == NULL) fclose(binPointer);
 				
-				binarioNaTela(arguments[BIN_FILE_NAME]);
 				free(arguments[BIN_FILE_NAME]);
 				free(arguments[0]);
+				free(arguments);
+
 				break;
 			case SELECT_VEHICLE:
 				cleanString(command);
 				arguments = getFields(2, command);
-				binPointer = openFile(arguments[FILE_NAME], "rb");
+				binPointer = openFile(arguments[FILE_NAME], "r");
 				free(arguments[FILE_NAME]);
 				vehiclesTable = readVehicleBinary(binPointer);
 				fclose(binPointer);
@@ -89,11 +99,13 @@ int main(){
 
 				free(arguments[0]);
 				freeVTable(vehiclesTable);
+				free(arguments);
+
 				break;
 			case SELECT_LINE:
 				cleanString(command);
 				arguments = getFields(2, command);
-				binPointer = openFile(arguments[FILE_NAME], "rb");
+				binPointer = openFile(arguments[FILE_NAME], "r");
 				free(arguments[FILE_NAME]);
 				linesTable = readLineBinary(binPointer);
 				fclose(binPointer);
@@ -102,11 +114,13 @@ int main(){
 
 				free(arguments[0]);
 				freeLineTable(linesTable);
+				free(arguments);
+
 				break;
 			case WHERE_VEHICLE:
 				cleanString(command);
 				arguments = getFields(4, command);
-				binPointer = openFile(arguments[FILE_NAME], "rb");
+				binPointer = openFile(arguments[FILE_NAME], "r");
 				free(arguments[FILE_NAME]);
 				vehiclesTable = readVehicleBinary(binPointer);
 				fclose(binPointer);
@@ -129,11 +143,13 @@ int main(){
 				free(arguments[FIELD_NAME]);
 				free(arguments[FIELD_VALUE]);
 				freeVTable(vehiclesTable);
+				free(arguments);
+
 				break;
 			case WHERE_LINE:
 				cleanString(command);
 				arguments = getFields(4, command);
-				binPointer = openFile(arguments[FILE_NAME], "rb");
+				binPointer = openFile(arguments[FILE_NAME], "r");
 				free(arguments[FILE_NAME]);
 				linesTable = readLineBinary(binPointer);
 				fclose(binPointer);
@@ -154,15 +170,25 @@ int main(){
 				free(arguments[FIELD_NAME]);
 				free(arguments[FIELD_VALUE]);
 				freeLineTable(linesTable);
+				free(arguments);
+
 				break;
 			case INSERTION_VEHICLE:
 				cleanString(command);
 				arguments = getFields(3, command);
-				binPointer = openFile(arguments[FILE_NAME], "rb");
+				binPointer = openFile(arguments[FILE_NAME], "r");
 				vehiclesTable = readVehicleBinary(binPointer);
-				fclose(binPointer);
+				if(vehiclesTable == NULL) {
+					fclose(binPointer);
+					free(arguments[0]);
+					free(arguments[FILE_NAME]);
+					free(arguments[INSERT_QNTY]);
+					free(arguments);
+					break;
+				}
 
 				insertVehicleEntries(vehiclesTable, atoi(arguments[INSERT_QNTY]), ",", binPointer);
+				fclose(binPointer);
 				freeVTable(vehiclesTable);
 
 				binarioNaTela(arguments[FILE_NAME]);
@@ -170,13 +196,22 @@ int main(){
 				free(arguments[0]);
 				free(arguments[FILE_NAME]);
 				free(arguments[INSERT_QNTY]);
+				free(arguments);
 
 				break;
 			case INSERTION_LINE:
 				cleanString(command);
 				arguments = getFields(3, command);
-				binPointer = openFile(arguments[FILE_NAME], "rb");
+				binPointer = openFile(arguments[FILE_NAME], "r");
 				linesTable = readLineBinary(binPointer);
+				if(linesTable == NULL) {
+					fclose(binPointer);
+					free(arguments[0]);
+					free(arguments[FILE_NAME]);
+					free(arguments[INSERT_QNTY]);
+					free(arguments);
+					break;
+				}
 				fclose(binPointer);
 
 				insertLineEntries(linesTable, atoi(arguments[INSERT_QNTY]), binPointer);
@@ -187,9 +222,9 @@ int main(){
 				free(arguments[0]);
 				free(arguments[FILE_NAME]);
 				free(arguments[INSERT_QNTY]);
+				free(arguments);
 				break;
 		}
-		free(arguments);
 		free(command);
 		
 	}

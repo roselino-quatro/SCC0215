@@ -188,10 +188,11 @@ bool freeLineTable(LTable* table){
 }
 
 LTable* readLineBinary(FILE* bin){
-	if(bin == NULL){
+	if(bin == NULL || fgetc(bin) != '1'){
 		printf("Falha no processamento do arquivo\n");
 		return NULL;
 	}
+	rewind(bin);
 
 	LTable* table = malloc(sizeof(LTable));
 
@@ -271,7 +272,7 @@ void displayLine(LEntry* entry){
 
 // Familia de funções para a selectLineWhere
 bool matchLineCode(LEntry* entry,void* code){
-	return (entry->lineCode == *(int*)code)? true : false;
+	return (entry->lineCode == atoi(code))? true : false;
 };
 
 bool matchLineAcceptCard(LEntry* entry,void* cardStatus){
@@ -306,7 +307,7 @@ void selectLine(LTable* table){
 		anyMatched = true;
 	}
 
-	if (!anyMatched) printf("Registro inexistente\n");
+	if (!anyMatched) printf("Registro inexistente.\n");
 }
 
 
@@ -326,7 +327,7 @@ void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)){
 		anyMatched = true;
 	}
 
-	if (!anyMatched) printf("Registro inexistente\n");
+	if (!anyMatched) printf("Registro inexistente.\n");
 }
 
 void insertLineEntries(LTable* table,int qty,FILE* bin){
@@ -338,7 +339,6 @@ void insertLineEntries(LTable* table,int qty,FILE* bin){
 	for(int i = 0;i < qty;i++){
 		char* entryString = readline(stdin);
 		cleanString(entryString);
-		printf("Inserindo: %s\n",entryString);
 		LEntry* entry = LEntryFromString(entryString);
 		table->header->byteOffset += entry->size;
 
@@ -348,8 +348,9 @@ void insertLineEntries(LTable* table,int qty,FILE* bin){
 		(entry->isPresent == '1')? ++table->header->qty : ++table->header->rmvQty;
 
 		table->lines[i] = *entry;
+		free(entryString);
+		free(entryBytes);
 		free(entry);
-		printf("Feito\n");
 	}
 
 	table->qty += qty;

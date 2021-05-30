@@ -201,10 +201,11 @@ VTable* readVehicleCsv(FILE* csv,char* delim){
 }
 
 VTable* readVehicleBinary(FILE* bin){
-	if(bin == NULL){
+	if(bin == NULL || fgetc(bin) != '1'){
 		printf("Falha no processamento do arquivo\n");
 		return NULL;
 	}
+	rewind(bin);
 
 	VTable* table = malloc(sizeof(VTable));
 
@@ -318,7 +319,7 @@ bool matchVehicleData(VEntry* entry,void* data){
 
 bool matchVehicleSeatQty(VEntry* entry,void* seatQty){
 	if (entry->seatQty == -1) return false;
-	return (entry->seatQty == *(int*)seatQty)? true : false;
+	return (entry->seatQty == atoi(seatQty))? true : false;
 }
 
 bool matchVehicleModel(VEntry* entry,void* model){
@@ -346,7 +347,7 @@ void selectVehicle(VTable* table){
 		anyMatched = true;
 	}
 
-	if(!anyMatched) printf("Registro inexistente\n");
+	if(!anyMatched) printf("Registro inexistente.\n");
 }
 
 void selectVehicleWhere(VTable* table,void* key,bool (*match)(VEntry*,void*)){
@@ -364,7 +365,7 @@ void selectVehicleWhere(VTable* table,void* key,bool (*match)(VEntry*,void*)){
 		anyMatched = true;
 	}
 
-	if (!anyMatched) printf("Registro inexistente\n");
+	if (!anyMatched) printf("Registro inexistente.\n");
 }
 
 void insertVehicleEntries(VTable* table,int qty,char* delim,FILE* bin){
@@ -376,7 +377,6 @@ void insertVehicleEntries(VTable* table,int qty,char* delim,FILE* bin){
 	for(int i = 0;i < qty;i++){
 		char* entryString = readline(stdin);
 		cleanString(entryString);
-		printf("%s\n",entryString);
 		VEntry* entry = VEntryFromString(entryString,delim);
 		table->header->byteOffset += entry->size;
 
@@ -386,6 +386,8 @@ void insertVehicleEntries(VTable* table,int qty,char* delim,FILE* bin){
 		(entry->isPresent == '1')? ++table->header->qty : ++table->header->rmvQty;
 
 		table->fleet[i] = *entry;
+		free(entryString);
+		free(entryBytes);
 		free(entry);
 	}
 
