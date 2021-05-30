@@ -1,3 +1,5 @@
+// Gabriel Victor Cardoso Fernandes nUsp 11878296
+// Lourenço de Salles Roselino nUsp 11796805
 #include "line.h"
 
 LInfo* LInfoFromString(char* src){

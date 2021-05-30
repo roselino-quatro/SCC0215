@@ -1,6 +1,20 @@
+// Gabriel Victor Cardoso Fernandes nUsp 11878296
+// Lourenço de Salles Roselino nUsp 11796805
 #include "vehicle.h"
 #include "line.h"
 #include "utils.h"
+
+#define CREATE_VEHICLE 1
+#define CREATE_LINE 2
+#define SELECT_VEHICLE 3
+#define SELECT_LINE 4
+#define WHERE_VEHICLE 5
+#define WHERE_LINE 6
+#define INSERTION_VEHICLE 7
+#define INSERTION_LINE 8
+
+#define FILE_NAME 1
+#define BIN_FILE_NAME 2
 
 // Exemplo de formatar string pra csv
 // char* input = readline(stdin);
@@ -9,6 +23,88 @@
 // args[0], args[1] ... vai ter <quantidade> strings (todas alocadas, lembra de dar free dps)
 
 int main(){
+	// Declaração de variaveis
+	char** arguments;
+	char* command;
+	FILE* csvPointer;
+	FILE* binPointer;
+	VTable* vehiclesTable;
+	LTable* linesTables;
+	int op;
+	do {
+		command = readline(stdin);
+		op = atoi(command);
+		switch(op) {
+			case CREATE_VEHICLE:
+				cleanString(command);
+				arguments = getFields(3, command);
+				csvPointer = openFile(arguments[FILE_NAME], "rb");
+				free(arguments[FILE_NAME]);
+				binPointer = openFile(arguments[BIN_FILE_NAME], "wb");
+
+				vehiclesTable = readVehicleCsv(csvPointer, ",");
+				fclose(csvPointer);
+				writeVehicleBinary(vehiclesTable, binPointer);
+				fclose(binPointer);
+				freeVTable(vehiclesTable);
+				
+				binarioNaTela(arguments[BIN_FILE_NAME]);
+				free(arguments[BIN_FILE_NAME]);
+				break;
+			case CREATE_LINE:
+				cleanString(command);
+				arguments = getFields(3, command);
+				csvPointer = openFile(arguments[FILE_NAME], "rb");
+				free(arguments[FILE_NAME]);
+				binPointer = openFile(arguments[BIN_FILE_NAME], "wb");
+
+				linesTables = readLineCsv(csvPointer);
+				fclose(csvPointer);
+				writeLineBinary(linesTables, binPointer);
+				fclose(binPointer);
+				freeLTable(linesTables);
+				
+				binarioNaTela(arguments[BIN_FILE_NAME]);
+				free(arguments[BIN_FILE_NAME]);
+				free(argumentes[1]);
+				break;
+			case SELECT_VEHICLE:
+				cleanString(command);
+				arguments = getFields(2, command);
+				binPointer = openFile(arguments[FILE_NAME], "rb");
+				free(arguments[FILE_NAME]);
+				vehiclesTable = readVehicleBinary(binPointer);
+				fclose(binPointer);
+
+				selectVehicle(vehiclesTable);
+
+				freeVehicleTable(vehiclesTable);
+				break;
+			case SELECT_LINE:
+				cleanString(command);
+				arguments = getFields(2, command);
+				binPointer = openFile(arguments[FILE_NAME], "rb");
+				free(arguments[FILE_NAME]);
+				linesTables = readLineBinary(binPointer);
+				fclose(binPointer);
+
+				selectLine(linesTables);
+
+				freeLineTable(linesTables);
+				break;
+			case WHERE_VEHICLE:
+				break;
+			case WHERE_LINE:
+				break;
+			case INSERTION_VEHICLE:
+				break;
+			case INSERTION_LINE:
+				break;
+		}
+		
+	} while(!feof(stdin));
+
+
 	char* command = readline(stdin);
 	int op = atoi(command);
 	while(command){
