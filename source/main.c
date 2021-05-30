@@ -176,7 +176,7 @@ int main(){
 			case INSERTION_VEHICLE:
 				cleanString(command);
 				arguments = getFields(3, command);
-				binPointer = openFile(arguments[FILE_NAME], "r");
+				binPointer = openFile(arguments[FILE_NAME], "r+");
 				vehiclesTable = readVehicleBinary(binPointer);
 				if(vehiclesTable == NULL) {
 					fclose(binPointer);
@@ -202,7 +202,7 @@ int main(){
 			case INSERTION_LINE:
 				cleanString(command);
 				arguments = getFields(3, command);
-				binPointer = openFile(arguments[FILE_NAME], "r");
+				binPointer = openFile(arguments[FILE_NAME], "r+");
 				linesTable = readLineBinary(binPointer);
 				if(linesTable == NULL) {
 					fclose(binPointer);
@@ -212,9 +212,9 @@ int main(){
 					free(arguments);
 					break;
 				}
-				fclose(binPointer);
 
 				insertLineEntries(linesTable, atoi(arguments[INSERT_QNTY]), binPointer);
+				fclose(binPointer);
 				freeLineTable(linesTable);
 
 				binarioNaTela(arguments[FILE_NAME]);
