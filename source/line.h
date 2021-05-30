@@ -18,7 +18,7 @@ typedef struct _LineInfo{
 	char line[24];
 }LInfo;
 
-typedef struct _LineHeader{
+typedef struct _LineEntry{
 	char isPresent;
 	int size;
 	int lineCode;
@@ -76,6 +76,13 @@ void writeLineBinary(LTable* table,FILE* bin);
 void displayLine(LEntry* entry);
 
 /****
+ * Imprime todos as entradas dentro da table
+ * 
+ * @param table table com as linhas
+ */
+void selectLine(LTable* table);
+
+/****
  * Familia de funções para a selectLineWhere
  * 
  * @param lReg registro a ser verificado
@@ -85,14 +92,6 @@ bool matchLineCode(LEntry* lReg,void* code);
 bool matchLineAcceptCard(LEntry* lReg,void* cardStatus);
 bool matchLineName(LEntry* lReg,void* name);
 bool matchLineColor(LEntry* lReg,void* color);
-
-
-/****
- * Imprime todos as entradas dentro da table
- * 
- * @param table table com as linhas
- */
-void selectLine(LTable* table);
 
 /****
  * Imprime todos linhas, que possuem a chave procurada, numa table
@@ -111,6 +110,4 @@ void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*));
  * @param bin arquivo que vai receber as novas entradas
  */
 void insertLineEntries(LTable* table,int qty,FILE* bin);
-
-
 #endif

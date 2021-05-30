@@ -46,7 +46,7 @@ int main(){
 				if(vehiclesTable != NULL) {
 					fclose(csvPointer);
 					writeVehicleBinary(vehiclesTable, binPointer);
-					freeVTable(vehiclesTable);
+					freeVehicleTable(vehiclesTable);
 					fclose(binPointer);
 					binarioNaTela(arguments[BIN_FILE_NAME]);
 				} else {
@@ -132,7 +132,7 @@ int main(){
 
 				insertVehicleEntries(vehiclesTable, atoi(arguments[INSERT_QNTY]), binPointer);
 				fclose(binPointer);
-				freeVTable(vehiclesTable);
+				freeVehicleTable(vehiclesTable);
 
 				binarioNaTela(arguments[FILE_NAME]);
 				break;

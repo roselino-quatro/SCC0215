@@ -243,7 +243,7 @@ VTable* readVehicleBinary(FILE* bin){
 }
 
 // Destructor que libera memoria alocada de uma struct VehicleData
-bool freeVTable(VTable* table){
+bool freeVehicleTable(VTable* table){
 	if (table == NULL) return false;
 
 	free(table->header);

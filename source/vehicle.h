@@ -5,7 +5,7 @@
 #include "utils.h"
 
 // Cabecalho do arquivo binário / Informações sobre a frota
-typedef struct VehiclesInfo{
+typedef struct _VehiclesInfo{
 	char stable;
 	long byteOffset;
 	int qty;
@@ -19,7 +19,7 @@ typedef struct VehiclesInfo{
 }VInfo;
 
 // Um registro de onibus na frota / Informações sobre 1 entrada no frota
-typedef struct VehicleEntry{
+typedef struct _VehicleEntry{
 	char isPresent;
 	int size;	// Size of all fields. When writing, subtract 5 to ignore first 2 (isPresent & size).
 	char prefix[5];
@@ -33,7 +33,7 @@ typedef struct VehicleEntry{
 }VEntry;
 
 // Status da frota inteira / Informações sobre metadados + todos registros da frota
-typedef struct VehiclesTable{
+typedef struct _VehiclesTable{
 	VInfo* header;
 	int qty;
 	VEntry* fleet;
@@ -61,7 +61,7 @@ VTable* readVehicleBinary(FILE* bin);
  * @param vData ponteiro para struct a ser liberada
  * @return boolean para caso a função tenha sucesso ou não
  */
-bool freeVTable(VTable* table);
+bool freeVehicleTable(VTable* table);
 
 /****
  * Escreve a table, na formatação especificada, em um arquivo binario
@@ -78,6 +78,14 @@ void writeVehicleBinary(VTable* table,FILE* bin);
  */
 void displayVehicle(VEntry* entry);
 
+
+/****
+ * Imprime todos veiculos de uma table
+ * 
+ * @param table table com os veiculos
+ */
+void selectVehicle(VTable* table);
+
 /****
  * Familia de funções para a selectVehicleWhere
  * 
@@ -89,13 +97,6 @@ bool matchVehicleData(VEntry* entry,void* data);
 bool matchVehicleSeatQty(VEntry* entry,void* seatQty);
 bool matchVehicleModel(VEntry* entry,void* model);
 bool matchVehicleCategory(VEntry* entry,void* category);
-
-/****
- * Imprime todos veiculos de uma table
- * 
- * @param table table com os veiculos
- */
-void selectVehicle(VTable* table);
 
 /****
  * Imprime todos veiculos, que possuem a chave procurada, numa table
