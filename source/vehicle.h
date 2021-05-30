@@ -45,7 +45,7 @@ typedef struct VehiclesTable{
  * @param csv arquivo csv com os dados formatados
  * @return VTable* table com os dados carregados
  */
-VTable* readVehicleCsv(FILE* csv,char* delim);
+VTable* readVehicleCsv(FILE* csv);
 
 /****
  * Cria uma tabela a partir de um arquivo binario
@@ -114,5 +114,5 @@ void selectVehicleWhere(VTable* table,void* key,bool (*match)(VEntry*,void*));
  * @param delim caractere que vai separar os campos da entrada
  * @param bin arquivo que vai receber as novas entradas
  */
-void insertVehicleEntries(VTable* table,int qty,char* delim,FILE* bin);
+void insertVehicleEntries(VTable* table,int qty,FILE* bin);
 #endif

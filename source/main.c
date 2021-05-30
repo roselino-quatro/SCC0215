@@ -42,7 +42,7 @@ int main(){
 				csvPointer = openFile(arguments[FILE_NAME], "r");
 				binPointer = openFile(arguments[BIN_FILE_NAME], "wb");
 
-				vehiclesTable = readVehicleCsv(csvPointer, ",");
+				vehiclesTable = readVehicleCsv(csvPointer);
 				if(vehiclesTable != NULL) {
 					fclose(csvPointer);
 					writeVehicleBinary(vehiclesTable, binPointer);
@@ -59,8 +59,8 @@ int main(){
 				binPointer = openFile(arguments[BIN_FILE_NAME], "wb");
 
 				linesTable = readLineCsv(csvPointer);
-				fclose(csvPointer);
 				if(linesTable != NULL) {
+					fclose(csvPointer);
 					writeLineBinary(linesTable, binPointer);
 					freeLineTable(linesTable);
 					fclose(binPointer);
@@ -130,7 +130,7 @@ int main(){
 					break;
 				}
 
-				insertVehicleEntries(vehiclesTable, atoi(arguments[INSERT_QNTY]), ",", binPointer);
+				insertVehicleEntries(vehiclesTable, atoi(arguments[INSERT_QNTY]), binPointer);
 				fclose(binPointer);
 				freeVTable(vehiclesTable);
 

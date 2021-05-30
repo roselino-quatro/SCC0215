@@ -189,7 +189,7 @@ bool freeLineTable(LTable* table){
 
 LTable* readLineBinary(FILE* bin){
 	if(bin == NULL || fgetc(bin) != '1'){
-		printf("Falha no processamento do arquivo\n");
+		printf("Falha no processamento do arquivo.\n");
 		return NULL;
 	}
 	rewind(bin);

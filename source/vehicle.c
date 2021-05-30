@@ -2,7 +2,7 @@
 // Lourenço de Salles Roselino nUsp 11796805
 #include "vehicle.h"
 
-VInfo* VInfoFromString(char* src,char* delim){
+VInfo* VInfoFromString(char* src){
 	VInfo* info = malloc(sizeof(VInfo));
 	info->stable = '0';
 	info->byteOffset = 175;
@@ -61,7 +61,7 @@ char* VInfoAsBytes(VInfo* info){
 	return bytes;
 }
 
-VEntry* VEntryFromString(char* src,char* delim){
+VEntry* VEntryFromString(char* src){
 	VEntry* entry = malloc(sizeof(VEntry));
 	entry->size = 36;
 
@@ -160,7 +160,7 @@ char* VEntryAsBytes(VEntry* entry){
 }
 
 // Lê e parsea o CSV do arquivo e armazena em uma struct
-VTable* readVehicleCsv(FILE* csv,char* delim){
+VTable* readVehicleCsv(FILE* csv){
 	if(csv == NULL) {
 		printf("Falha no processamento do arquivo.\n");
 		return NULL;
@@ -169,7 +169,7 @@ VTable* readVehicleCsv(FILE* csv,char* delim){
 	VTable* table = malloc(sizeof(VTable));
 
 	char* headerString = readline(csv);
-	VInfo* info = VInfoFromString(headerString,delim);
+	VInfo* info = VInfoFromString(headerString);
 	free(headerString);
 
 	// While there are registers in the csv, allocate and process
@@ -184,7 +184,7 @@ VTable* readVehicleCsv(FILE* csv,char* delim){
 			table->fleet = realloc(table->fleet,table->qty * sizeof(VEntry));
 		}
 
-		VEntry* entry = VEntryFromString(entryString,delim);
+		VEntry* entry = VEntryFromString(entryString);
 		table->fleet[i] = *entry;
 		free(entry);
 		(table->fleet[i].isPresent == '1')? ++info->qty : ++info->rmvQty;
@@ -202,7 +202,7 @@ VTable* readVehicleCsv(FILE* csv,char* delim){
 
 VTable* readVehicleBinary(FILE* bin){
 	if(bin == NULL || fgetc(bin) != '1'){
-		printf("Falha no processamento do arquivo\n");
+		printf("Falha no processamento do arquivo.\n");
 		return NULL;
 	}
 	rewind(bin);
@@ -368,7 +368,7 @@ void selectVehicleWhere(VTable* table,void* key,bool (*match)(VEntry*,void*)){
 	if (!anyMatched) printf("Registro inexistente.\n");
 }
 
-void insertVehicleEntries(VTable* table,int qty,char* delim,FILE* bin){
+void insertVehicleEntries(VTable* table,int qty,FILE* bin){
 	rewind(bin);	// Rewind and mark binary as unstable
 	fwrite("0",sizeof(char),1,bin);
 	fseek(bin,0,SEEK_END);
@@ -377,7 +377,7 @@ void insertVehicleEntries(VTable* table,int qty,char* delim,FILE* bin){
 	for(int i = 0;i < qty;i++){
 		char* entryString = readline(stdin);
 		cleanString(entryString);
-		VEntry* entry = VEntryFromString(entryString,delim);
+		VEntry* entry = VEntryFromString(entryString);
 		table->header->byteOffset += entry->size;
 
 		char* entryBytes = VEntryAsBytes(entry);
