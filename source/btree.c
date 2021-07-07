@@ -42,6 +42,11 @@ void btree_write_header(BTree* btree) {
 	fclose(btree_file);
 }
 
+void btree_write_status(FILE* btree_file,char status) {
+	rewind(btree_file);
+	fwrite(&status, sizeof(char), 1, btree_file);
+}
+
 BTree* btree_new(char* file_name) {
 	if (!file_name) return NULL;
 	
@@ -287,6 +292,7 @@ long search_btree(BTree* btree,int searched_key){
 
 	// 0. Open btree_file
 	FILE* btree_file = fopen(btree->file_name, "rb+");
+	btree_write_status(btree_file, '0');
 
 	// 1. read root node using root_RRN from btree_header 
 	BtreeNode* node = node_read(btree,btree->noRaiz);
@@ -294,6 +300,7 @@ long search_btree(BTree* btree,int searched_key){
 		// 2. Binary searching for the key inside a node
 		int searched_key_pos = binary_search_pos(node->keys, node->key_quantity, searched_key);
 		if (node->keys[searched_key_pos] == searched_key) {
+			btree_write_status(btree_file, '1');
 			fclose(btree_file);
 			return node->offsets[searched_key_pos]; // If we find the key, return the associated byteoffset!
 		}
@@ -308,6 +315,7 @@ long search_btree(BTree* btree,int searched_key){
 		node = node_read(btree,child_rrn);
 	}
 
+	btree_write_status(btree_file, '1');
 	fclose(btree_file);
 	return -1; // node was not found, return -1
 }
@@ -316,6 +324,7 @@ void insert_btree(BTree* btree,int new_key,long byteoffset){
 	if (new_key == -1 || byteoffset == -1) return;
 	// 0. open btree_file
 	FILE* btree_file = fopen(btree->file_name, "rb+");
+	btree_write_status(btree_file, '0');
 
 	// 1. Initiliaze Node* stack. Necessary because algorithm is naturally recursive
 	// PLACEHOLDER: constant stack size - use log2(element_quantity) to get height/depth
@@ -334,6 +343,7 @@ void insert_btree(BTree* btree,int new_key,long byteoffset){
 		if (node->keys[new_key_pos] == new_key) {
 			for (int i = stack_top; i >= 0; i--) free(node_stack[i]);
 			free(node_stack);
+			btree_write_status(btree_file, '1');
 			fclose(btree_file);
 			return; // Exit function if key is found - no duplicates allowed
 		}
