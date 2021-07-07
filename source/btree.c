@@ -1,15 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-
-#define BTREE_ORDER 5
-#define CHILD_QUANTITY (BTREE_ORDER)
-#define KEY_QUANTITY (BTREE_ORDER-1)
-
-#define PAGE_SIZE 77
-#define HEADER_PADDING_LEN (PAGE_SIZE-9)
-#define HEADER_PADDING_CHAR '@'
+#include "btree.h"
 
 // Get the byte offset of a Node / Page File, given it's `rrn`.
 #define node_byteoffset(rrn) (PAGE_SIZE + PAGE_SIZE*rrn)
@@ -38,19 +27,6 @@ int binary_search_pos(int* array,int arr_len,int key) {
 }
 
 /**
-* Struct representing the Btree file Header.
-* Needs padding to serve as a dummy node / not interfere with RRN seeks.
-* Total byte size = 77 (`PAGE_SIZE`).
-*/
-typedef struct BTREE_INDEX_HEADER {
-	char status;       // File consistency: '0' when corrupted, otherwise '1'
-	int noRaiz;        // Root node RRN in FILE, -1 when tree is empty 
-	int RRNproxNo;     // RRN of next insertion in FILE. Starts with 0 and increases with evey addition
-	char _padding[HEADER_PADDING_LEN]; // Char padding filled with '@' for FILE consistency
-	char* file_name;   // Internal btree file name used for `fopen` and `fclose` in an easier way.
-} BTree;
-
-/**
 * Write current Btree header into it's file.
 * Will `fopen` and then `fclose` internally.
 */
@@ -66,11 +42,6 @@ void btree_write_header(BTree* btree) {
 	fclose(btree_file);
 }
 
-/**
-* Initiliaze a btree struct and file with name `file_name`.
-* Write the btree header into file.
-* In case `file_name == NULL` , do nothing and return `NULL`
-*/
 BTree* btree_new(char* file_name) {
 	if (!file_name) return NULL;
 	
@@ -91,9 +62,6 @@ BTree* btree_new(char* file_name) {
 	return btree;
 }
 
-/**
-* Free all memory of `btree`.
-*/
 void btree_delete(BTree* btree) {
 	free(btree->file_name);
 	free(btree);
@@ -238,7 +206,7 @@ BtreeNode* node_split(BTree* btree,BtreeNode* node,int* key,int right_child,long
 	}
 	overflow_children[key_pos] = node->children[key_pos];
 
-	// Insert key, offset and pointer to right half of previous split
+	// Insert key, offset and right_child_pointer of previous split
 	overflow_keys[key_pos]       = *key;
 	overflow_children[key_pos+1] = right_child;
 	overflow_offsets[key_pos]    = *offset;
@@ -261,7 +229,7 @@ BtreeNode* node_split(BTree* btree,BtreeNode* node,int* key,int right_child,long
 		node->offsets[i]  = overflow_offsets[i];
 	}
 
-	// 3. Build new Node that receives all keys to the right of key_pos
+	// 3. Build new Node (right part of split) that receives all keys to the right of key_pos
 	BtreeNode* right = node_new(btree);
 	right->is_leaf = node->is_leaf;
 	int r_pos = split_pos+1;
@@ -314,11 +282,6 @@ int node_add_key(BtreeNode* node,int new_key,long byteoffset) {
 	return key_pos;
 }
 
-/**
-* Search the `btree` for `searched_key`.
-* @return `byteoffset` on sucess.
-* @return `-1` if not found.
-*/
 long search_btree(BTree* btree,int searched_key){
 	if (btree->noRaiz == -1 || searched_key == -1) return -1; // RRN = -1 -> node doesn't exist
 
@@ -349,10 +312,6 @@ long search_btree(BTree* btree,int searched_key){
 	return -1; // node was not found, return -1
 }
 
-/**
-* Insert a {new_key: byteoffset} pair into the btree.
-* May do several file writes internally.
-*/
 void insert_btree(BTree* btree,int new_key,long byteoffset){
 	if (new_key == -1 || byteoffset == -1) return;
 	// 0. open btree_file
