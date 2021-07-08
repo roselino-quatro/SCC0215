@@ -334,7 +334,6 @@ bool matchVehicleCategory(VEntry* entry,void* category){
 
 void selectVehicle(VTable* table){
 	if(table == NULL){
-		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
 

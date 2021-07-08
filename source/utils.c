@@ -103,3 +103,12 @@ FILE* openFile(const char* name, const char* mode) {
 
 	return arq;
 }
+
+// Abre um arquivo tratando erros
+bool closeFile(FILE* file) {
+	if(file == NULL) return false;
+
+	fclose(file);
+
+	return true;
+}

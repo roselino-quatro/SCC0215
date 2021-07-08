@@ -71,12 +71,12 @@ void btree_delete(BTree* btree) {
 	free(btree->file_name);
 	free(btree);
 }
-
-// Node structure:
-//             [key     ,   key    ,      key,    key] <-------- Node / Page File
-//            /        /           |          \       \  
-// (left-child)  (1-child) (middle-child) (3-child) (right-child)
-
+/*
+    Node structure:
+                [key     ,   key    ,      key,    key] <-------- Node / Page File
+               /        /           |          \       \  
+    (left-child)  (1-child) (middle-child) (3-child) (right-child)
+****/
 /**
 * Struct representing Node / Page File.
 * Quantity of keys and children follows `BTREE_ORDER` macro.
@@ -106,7 +106,7 @@ BtreeNode* node_new(BTree* btree) {
 
 	// 2. Iterate in specified order
 	for (int i = 0; i < KEY_QUANTITY; i++) {
-		int off = 5 + (i*12);
+		// int off = 5 + (i*12);
 		node->children[i] = -1;
 		node->keys[i] = -1;
 		node->offsets[i] = -1;

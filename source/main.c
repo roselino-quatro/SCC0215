@@ -44,13 +44,13 @@ int main(){
 
 				vehiclesTable = readVehicleCsv(csvPointer);
 				if(vehiclesTable != NULL) {
-					fclose(csvPointer);
+					closeFile(csvPointer);
 					writeVehicleBinary(vehiclesTable, binPointer);
 					freeVehicleTable(vehiclesTable);
-					fclose(binPointer);
+					closeFile(binPointer);
 					binarioNaTela(arguments[BIN_FILE_NAME]);
 				} else {
-					fclose(binPointer);
+					closeFile(binPointer);
 				}
 				
 				break;
@@ -60,34 +60,34 @@ int main(){
 
 				linesTable = readLineCsv(csvPointer);
 				if(linesTable != NULL) {
-					fclose(csvPointer);
+					closeFile(csvPointer);
 					writeLineBinary(linesTable, binPointer);
 					freeLineTable(linesTable);
-					fclose(binPointer);
+					closeFile(binPointer);
 					binarioNaTela(arguments[BIN_FILE_NAME]);
 				} else {
-					fclose(binPointer);
+					closeFile(binPointer);
 				}
 				
 				break;
 			case SELECT_VEHICLE:
 				binPointer = openFile(arguments[FILE_NAME], "r");
 				vehiclesTable = readVehicleBinary(binPointer);
-				fclose(binPointer);
+				closeFile(binPointer);
 
 				selectVehicle(vehiclesTable);
 				break;
 			case SELECT_LINE:
 				binPointer = openFile(arguments[FILE_NAME], "r");
 				linesTable = readLineBinary(binPointer);
-				fclose(binPointer);
+				closeFile(binPointer);
 
 				selectLine(linesTable);
 				break;
 			case WHERE_VEHICLE:
 				binPointer = openFile(arguments[FILE_NAME], "r");
 				vehiclesTable = readVehicleBinary(binPointer);
-				fclose(binPointer);
+				closeFile(binPointer);
 
 				bool (*cmpVehicle)(VEntry*,void*); // Cria um ponteiro de função para ser itoçozada no SelectWhere
 				if(!strcmp(arguments[FIELD_NAME], "prefixo")) {
@@ -107,7 +107,7 @@ int main(){
 			case WHERE_LINE:
 				binPointer = openFile(arguments[FILE_NAME], "r");
 				linesTable = readLineBinary(binPointer);
-				fclose(binPointer);
+				closeFile(binPointer);
 
 				bool (*cmpLine)(LEntry*,void*); // Cria um ponteiro de função para ser itoçozada no SelectWhere
 				if(!strcmp(arguments[FIELD_NAME], "codLinha")) {
@@ -126,12 +126,12 @@ int main(){
 				binPointer = openFile(arguments[FILE_NAME], "r+");
 				vehiclesTable = readVehicleBinary(binPointer);
 				if(vehiclesTable == NULL) {
-					fclose(binPointer);
+					closeFile(binPointer);
 					break;
 				}
 
 				insertVehicleEntries(vehiclesTable, atoi(arguments[INSERT_QNTY]), binPointer);
-				fclose(binPointer);
+				closeFile(binPointer);
 				freeVehicleTable(vehiclesTable);
 
 				binarioNaTela(arguments[FILE_NAME]);
@@ -140,12 +140,12 @@ int main(){
 				binPointer = openFile(arguments[FILE_NAME], "r+");
 				linesTable = readLineBinary(binPointer);
 				if(linesTable == NULL) {
-					fclose(binPointer);
+					closeFile(binPointer);
 					break;
 				}
 
 				insertLineEntries(linesTable, atoi(arguments[INSERT_QNTY]), binPointer);
-				fclose(binPointer);
+				closeFile(binPointer);
 				freeLineTable(linesTable);
 
 				binarioNaTela(arguments[FILE_NAME]);

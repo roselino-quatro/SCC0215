@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 
 /****
@@ -51,5 +52,14 @@ void scan_quote_string(char *str);
  * @return Ponteiro para o arquivo
  */
 FILE* openFile(const char* name, const char* mode);
+
+/****
+ * 
+ * Fecha um arquivo tratando erros
+ * 
+ * @param file ponteiro de arquivo a ser fechado
+ * @return verdadeiro ou falso pro sucesso da operação
+ */
+bool closeFile(FILE* file);
 
 #endif

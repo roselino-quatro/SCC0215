@@ -294,7 +294,6 @@ bool matchLineColor(LEntry* entry,void* color){
 // Imprime todos os registros não removidos de uma struct
 void selectLine(LTable* table){
 	if(table == NULL) {
-		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
 
