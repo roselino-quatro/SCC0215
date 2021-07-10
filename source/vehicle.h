@@ -2,6 +2,7 @@
 #define _VEHICLE_H
 
 #include <stdbool.h>
+#include "btree.h"
 #include "utils.h"
 
 // Cabecalho do arquivo binário / Informações sobre a frota
@@ -116,4 +117,14 @@ void selectVehicleWhere(VTable* table,void* key,bool (*match)(VEntry*,void*));
  * @param bin arquivo que vai receber as novas entradas
  */
 void insertVehicleEntries(VTable* table,int qty,FILE* bin);
+
+/****
+ *  Creates a BTree from a binary file
+ * 
+ * @param file_origin_name nome do arquivo a ser lido
+ * @param file_dest_name
+ * @return pointer fro  btree struct created 
+ */
+BTree* vehcileBTreeFromBin(char* file_origin_name, char* file_dest_name);
+
 #endif

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "utils.h"
+#include "btree.h"
 
 typedef struct _LineInfo{
 	char stable;
@@ -110,4 +111,14 @@ void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*));
  * @param bin arquivo que vai receber as novas entradas
  */
 void insertLineEntries(LTable* table,int qty,FILE* bin);
+
+/****
+ *  Creates a BTree from a binary file
+ * 
+ * @param file_origin_name nome do arquivo a ser lido
+ * @param file_dest_name
+ * @return pointer fro  btree struct created 
+ */
+BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name);
+
 #endif

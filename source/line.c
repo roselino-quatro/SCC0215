@@ -359,3 +359,35 @@ void insertLineEntries(LTable* table,int qty,FILE* bin){
 	fwrite(&table->header->qty,sizeof(int),1,bin);
 	fwrite(&table->header->rmvQty,sizeof(int),1,bin);
 }
+
+/*
+ FUNÇÕES DO TRABALHO 2
+*/
+
+// Creates a BTree from a binary file
+BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name) {
+	// Creating file and header info
+	BTree* btree_struct = btree_new(file_dest_name);
+
+	// Opening file to be read
+	FILE* origin_file = openFile(file_dest_name, "rb");
+
+	fseek(origin_file, 82, SEEK_SET);
+
+	int cod_linha;
+	long offset;
+	int reg_size; // For skipping registers
+	char removed;
+	while(!feof(origin_file)) { // Loop for reading registers and putting in the BTree
+		offset = ftell(origin_file);
+		fread(&removed, 1, sizeof(char), origin_file);
+		fread(&reg_size, 1, sizeof(int), origin_file);
+		fread(cod_linha, 1, sizeof(int), origin_file);
+		if(removed != '0') {
+			insert_btree(btree_struct, convertePrefixo(cod_linha), offset);
+		}
+		fseek(origin_file, reg_size - 9, SEEK_CUR);
+	}
+	
+	return btree_struct;
+}

@@ -397,3 +397,35 @@ void insertVehicleEntries(VTable* table,int qty,FILE* bin){
 	fwrite(&table->header->qty,sizeof(int),1,bin);
 	fwrite(&table->header->rmvQty,sizeof(int),1,bin);
 }
+
+/*
+ FUNÇÕES DO TRABALHO 2
+*/
+
+// Creates a BTree from a binary file
+BTree* vehcileBTreeFromBin(char* file_origin_name, char* file_dest_name) {
+	// Creating file and header info
+	BTree* btree_struct = btree_new(file_dest_name);
+
+	// Opening file to be read
+	FILE* origin_file = openFile(file_dest_name, "rb");
+
+	fseek(origin_file, 174, SEEK_SET);
+
+	char* prefix = malloc(5 * sizeof(char));
+	long offset;
+	int reg_size; // For skipping registers
+	char removed;
+	while(!feof(origin_file)) { // Loop for reading registers and putting in the BTree
+		offset = ftell(origin_file);
+		fread(&removed, 1, sizeof(char), origin_file);
+		fread(&reg_size, 1, sizeof(int), origin_file);
+		fread(prefix, 5, sizeof(char), origin_file);
+		if(removed != '0') {
+			insert_btree(btree_struct, convertePrefixo(prefix), offset);
+		}
+		fseek(origin_file, reg_size - 10, SEEK_CUR);
+	}
+	
+	return btree_struct;
+}
