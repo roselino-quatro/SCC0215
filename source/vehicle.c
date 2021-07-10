@@ -426,6 +426,7 @@ BTree* vehcileBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 		}
 		fseek(origin_file, reg_size - 10, SEEK_CUR);
 	}
+	fclose(origin_file);
 	
 	return btree_struct;
 }

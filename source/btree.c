@@ -47,6 +47,23 @@ void btree_write_status(FILE* btree_file,char status) {
 	fwrite(&status, sizeof(char), 1, btree_file);
 }
 
+BTree* btree_read_header(char* file_name) {
+	if (!file_name) return NULL;
+
+	FILE* btree_file = openFile(file_name, "rb");
+	BTree* btree_struct = malloc(sizeof(BTree));
+
+	fread(btree_struct->status, sizeof(char), 1, btree_file);
+	fread(btree_struct->noRaiz, sizeof(int), 1, btree_file);
+	fread(btree_struct->RRNproxNo, sizeof(int), 1, btree_file);
+	fread(btree_struct->_padding, sizeof(char), HEADER_PADDING_CHAR, btree_file);
+	btree_struct->file_name = file_name;
+
+	fclose(btree_file);
+
+	return btree_struct;
+}
+
 BTree* btree_new(char* file_name) {
 	if (!file_name) return NULL;
 	
@@ -106,7 +123,6 @@ BtreeNode* node_new(BTree* btree) {
 
 	// 2. Iterate in specified order
 	for (int i = 0; i < KEY_QUANTITY; i++) {
-		// int off = 5 + (i*12);
 		node->children[i] = -1;
 		node->keys[i] = -1;
 		node->offsets[i] = -1;
