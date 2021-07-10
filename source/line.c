@@ -392,3 +392,26 @@ BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 	
 	return btree_struct;
 }
+
+// imprime um registro usando o offset fornecido pelo search da btree
+void displayVehicleOffset(char* file_name, long offset) {
+	if(file_name == NULL) return;
+
+	FILE* line_file = openFile(file_name, "rb");
+
+	fseek(line_file, offset+1, SEEK_SET);
+
+	int reg_size;
+	fread(&reg_size, sizeof(int), 1, line_file);
+	fseek(line_file, -1, SEEK_CUR);
+
+	char* bytes_from_reg = malloc(reg_size * sizeof(char));
+	fread(bytes_from_reg, sizeof(char), reg_size, line_file);
+
+	LEntry* reg_entry = LEntryFromBytes(bytes_from_reg);
+	displayLine(reg_entry);
+
+	free(reg_entry);
+	free(bytes_from_reg);
+	closeFile(line_file);
+}

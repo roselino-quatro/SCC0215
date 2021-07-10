@@ -125,6 +125,14 @@ void insertVehicleEntries(VTable* table,int qty,FILE* bin);
  * @param file_dest_name
  * @return pointer fro  btree struct created 
  */
-BTree* vehcileBTreeFromBin(char* file_origin_name, char* file_dest_name);
+BTree* vehicleBTreeFromBin(char* file_origin_name, char* file_dest_name);
+
+/****
+ * imprime um registro usando o offset fornecido pelo search da btree
+ * 
+ * @param file_name nome do arquivo a ser lido
+ * @param offset offset aonde está o registro a ser impresso
+ */
+void displayVehicleOffset(char* file_name, long offset);
 
 #endif

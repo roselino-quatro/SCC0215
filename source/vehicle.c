@@ -403,7 +403,7 @@ void insertVehicleEntries(VTable* table,int qty,FILE* bin){
 */
 
 // Creates a BTree from a binary file
-BTree* vehcileBTreeFromBin(char* file_origin_name, char* file_dest_name) {
+BTree* vehicleBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 	// Creating file and header info
 	BTree* btree_struct = btree_new(file_dest_name);
 
@@ -426,7 +426,30 @@ BTree* vehcileBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 		}
 		fseek(origin_file, reg_size - 10, SEEK_CUR);
 	}
-	fclose(origin_file);
+	closeFile(origin_file);
 	
 	return btree_struct;
+}
+
+// imprime um registro usando o offset fornecido pelo search da btree
+void displayVehicleOffset(char* file_name, long offset) {
+	if(file_name == NULL) return;
+
+	FILE* vehicle_file = openFile(file_name, "rb");
+
+	fseek(vehicle_file, offset+1, SEEK_SET);
+
+	int reg_size;
+	fread(&reg_size, sizeof(int), 1, vehicle_file);
+	fseek(vehicle_file, -1, SEEK_CUR);
+
+	char* bytes_from_reg = malloc(reg_size * sizeof(char));
+	fread(bytes_from_reg, sizeof(char), reg_size, vehicle_file);
+
+	VEntry* reg_entry = VEntryFromBytes(bytes_from_reg);
+	displayVehicle(reg_entry);
+
+	free(reg_entry);
+	free(bytes_from_reg);
+	closeFile(vehicle_file);
 }
