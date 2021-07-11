@@ -453,3 +453,46 @@ void displayVehicleOffset(char* file_name, long offset) {
 	free(bytes_from_reg);
 	closeFile(vehicle_file);
 }
+
+
+// Insere novos registros em um arquivo e indexa na arvore b lendo do stdin
+void insertVehicleEntriesBTree(VTable* table, int qty, FILE* bin, BTree* btree_struct){
+	rewind(bin);	// Rewind and mark binary as unstable
+	fwrite("0",sizeof(char),1,bin);
+	fseek(bin,0,SEEK_END);
+
+	table->fleet = realloc(table->fleet,(table->qty+qty)*sizeof(VEntry));
+	for(int i = 0;i < qty;i++){ // Itera pelas linhas de entrada
+
+		// Lê uma linha e transforma ela em uma entry
+		char* entryString = readline(stdin);
+		cleanString(entryString);
+		VEntry* entry = VEntryFromString(entryString);
+
+		// Se o novo registro não estiver logicamente deletado adicione ele no index
+		if (entry->isPresent == '1') {
+			++table->header->qty; 
+			insert_btree(btree_struct, convertePrefixo(entry->prefix), ftell(bin));
+		} else {
+			++table->header->rmvQty;
+		}
+
+		table->header->byteOffset += entry->size;
+
+		char* entryBytes = VEntryAsBytes(entry);
+		fwrite(entryBytes,sizeof(char),entry->size,bin);
+
+
+		table->fleet[i] = *entry;
+		free(entryString);
+		free(entryBytes);
+		free(entry);
+	}
+
+	table->qty += qty;
+	rewind(bin);	// Rewind and mark binary as stable
+	fwrite("1",sizeof(char),1,bin);
+	fwrite(&table->header->byteOffset,sizeof(long),1,bin);
+	fwrite(&table->header->qty,sizeof(int),1,bin);
+	fwrite(&table->header->rmvQty,sizeof(int),1,bin);
+}

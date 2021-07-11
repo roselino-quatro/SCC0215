@@ -113,7 +113,6 @@ void selectVehicleWhere(VTable* table,void* key,bool (*match)(VEntry*,void*));
  * 
  * @param table tabela a receber as novas entradas
  * @param qty quantidade de entradas que vao ser lidas
- * @param delim caractere que vai separar os campos da entrada
  * @param bin arquivo que vai receber as novas entradas
  */
 void insertVehicleEntries(VTable* table,int qty,FILE* bin);
@@ -134,5 +133,15 @@ BTree* vehicleBTreeFromBin(char* file_origin_name, char* file_dest_name);
  * @param offset offset aonde está o registro a ser impresso
  */
 void displayVehicleOffset(char* file_name, long offset);
+
+/****
+ * Insere novos registros em um arquivo e indexa na arvore b lendo do stdin
+ * 
+ * @param table tabela a receber as novas entradas
+ * @param qty quantidade de entradas que vao ser lidas
+ * @param bin arquivo que vai receber as novas entradas
+ * @param btree_struct header da btree sendo usada
+ */
+void insertVehicleEntriesBTree(VTable* table, int qty, FILE* bin, BTree* btree_struct);
 
 #endif
