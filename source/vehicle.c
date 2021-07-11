@@ -405,10 +405,21 @@ void insertVehicleEntries(VTable* table,int qty,FILE* bin){
 // Creates a BTree from a binary file
 BTree* vehicleBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 	// Creating file and header info
-	BTree* btree_struct = btree_new(file_dest_name);
 
 	// Opening file to be read
-	FILE* origin_file = openFile(file_dest_name, "rb");
+	FILE* origin_file = openFile(file_origin_name, "rb");
+
+	if(origin_file == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return NULL;
+	}
+
+	BTree* btree_struct = btree_new(file_dest_name);
+	
+	if(btree_struct == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return NULL;
+	}
 
 	fseek(origin_file, 174, SEEK_SET);
 

@@ -34,6 +34,11 @@ typedef struct BTREE_INDEX_HEADER {
 */
 BTree* btree_new(char* file_name);
 
+/****
+ * Returns the reader from a btree file
+ */
+BTree* btree_read_header(char* file_name);
+
 /**
 * Free all memory of `btree`.
 */

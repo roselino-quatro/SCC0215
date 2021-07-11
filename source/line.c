@@ -367,10 +367,14 @@ void insertLineEntries(LTable* table,int qty,FILE* bin){
 // Creates a BTree from a binary file
 BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 	// Creating file and header info
-	BTree* btree_struct = btree_new(file_dest_name);
+	BTree* btree_struct = btree_new(file_origin_name);
 
 	// Opening file to be read
 	FILE* origin_file = openFile(file_dest_name, "rb");
+	if(btree_struct == NULL || origin_file == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return NULL;
+	}
 
 	fseek(origin_file, 82, SEEK_SET);
 
@@ -382,9 +386,9 @@ BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 		offset = ftell(origin_file);
 		fread(&removed, 1, sizeof(char), origin_file);
 		fread(&reg_size, 1, sizeof(int), origin_file);
-		fread(cod_linha, 1, sizeof(int), origin_file);
+		fread(&cod_linha, 1, sizeof(int), origin_file);
 		if(removed != '0') {
-			insert_btree(btree_struct, convertePrefixo(cod_linha), offset);
+			insert_btree(btree_struct, cod_linha, offset);
 		}
 		fseek(origin_file, reg_size - 9, SEEK_CUR);
 	}
@@ -394,7 +398,7 @@ BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 }
 
 // imprime um registro usando o offset fornecido pelo search da btree
-void displayVehicleOffset(char* file_name, long offset) {
+void displayLineOffset(char* file_name, long offset) {
 	if(file_name == NULL) return;
 
 	FILE* line_file = openFile(file_name, "rb");

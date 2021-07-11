@@ -31,7 +31,7 @@ int binary_search_pos(int* array,int arr_len,int key) {
 * Will `fopen` and then `fclose` internally.
 */
 void btree_write_header(BTree* btree) {
-	printf("Writing header\n");
+	//printf("Writing header\n");
 	FILE* btree_file = fopen(btree->file_name, "r+");
 	rewind(btree_file);
 
@@ -53,9 +53,9 @@ BTree* btree_read_header(char* file_name) {
 	FILE* btree_file = openFile(file_name, "rb");
 	BTree* btree_struct = malloc(sizeof(BTree));
 
-	fread(btree_struct->status, sizeof(char), 1, btree_file);
-	fread(btree_struct->noRaiz, sizeof(int), 1, btree_file);
-	fread(btree_struct->RRNproxNo, sizeof(int), 1, btree_file);
+	fread(&btree_struct->status, sizeof(char), 1, btree_file);
+	fread(&btree_struct->noRaiz, sizeof(int), 1, btree_file);
+	fread(&btree_struct->RRNproxNo, sizeof(int), 1, btree_file);
 	fread(btree_struct->_padding, sizeof(char), HEADER_PADDING_CHAR, btree_file);
 	btree_struct->file_name = file_name;
 
@@ -69,7 +69,7 @@ BTree* btree_new(char* file_name) {
 	
 	// 1. Initiliaze Btree struct with default values.
 	BTree* btree = malloc(sizeof(BTree));
-	printf("Alocando %lu bytes do tamanho da btree\n",sizeof(BTree));
+	//printf("Alocando %lu bytes do tamanho da btree\n",sizeof(BTree));
 	btree->status = '1';
 	btree->noRaiz = -1;
 	btree->RRNproxNo = -1;
@@ -85,6 +85,9 @@ BTree* btree_new(char* file_name) {
 }
 
 void btree_delete(BTree* btree) {
+	if(btree == NULL || btree->file_name == NULL) {
+
+	}
 	free(btree->file_name);
 	free(btree);
 }
@@ -143,7 +146,7 @@ BtreeNode* node_read(BTree* btree,int rrn){
 	FILE* btree_file = fopen(btree->file_name, "rb+");
 
 	// 1. Read Node data to buffer.
-	printf("Reading node of rrn %d at byteoffset %d\n",rrn,node_byteoffset(rrn));
+	//printf("Reading node of rrn %d at byteoffset %d\n",rrn,node_byteoffset(rrn));
 	char node_data[PAGE_SIZE];
 	fseek(btree_file,node_byteoffset(rrn),SEEK_SET);
 	fread(&node_data,sizeof(char),PAGE_SIZE,btree_file);
@@ -182,7 +185,7 @@ void node_write(BTree* btree,BtreeNode* node){
 	FILE* btree_file = fopen(btree->file_name, "rb+");
 
 	// 1. Seek to Node byteoffset
-	printf("Writing Node of rrn %d at byteoffset %d\n",node->node_rrn,node_byteoffset(node->node_rrn));
+	//printf("Writing Node of rrn %d at byteoffset %d\n",node->node_rrn,node_byteoffset(node->node_rrn));
 	fseek(btree_file,node_byteoffset(node->node_rrn),SEEK_SET);
 
 	// 2. Build buffer with Node internal data, in specified file representation

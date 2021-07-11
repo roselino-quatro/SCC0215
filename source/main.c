@@ -4,6 +4,7 @@
 #include "line.h"
 #include "utils.h"
 
+// Operações Trab 1
 #define CREATE_VEHICLE 1
 #define CREATE_LINE 2
 #define SELECT_VEHICLE 3
@@ -12,6 +13,14 @@
 #define WHERE_LINE 6
 #define INSERTION_VEHICLE 7
 #define INSERTION_LINE 8
+
+// Operações Trab 2
+#define CREATE_INDEX_VEHICLE 9
+#define CREATE_INDEX_LINE 10
+#define WHERE_VEHICLE_INDEX 11
+#define WHERE_LINE_INDEX 12
+#define INSERTION_VEHICLE_INDEX 13
+#define INSERTION_LINE_INDEX 14
 
 #define FILE_NAME 1
 #define BIN_FILE_NAME 2
@@ -27,6 +36,8 @@ int main(){
 	FILE* binPointer;
 	VTable* vehiclesTable;
 	LTable* linesTable;
+	BTree* btree_struct;
+	long offset;
 	int op;
 
 	// Loop principal
@@ -148,6 +159,54 @@ int main(){
 				closeFile(binPointer);
 				freeLineTable(linesTable);
 
+				binarioNaTela(arguments[FILE_NAME]);
+				break;
+			case CREATE_INDEX_VEHICLE:
+				btree_delete(vehicleBTreeFromBin(arguments[1], arguments[2]));
+				break;
+			case CREATE_INDEX_LINE:
+				btree_delete(lineBTreeFromBin(arguments[1], arguments[2]));
+				break;
+			case WHERE_VEHICLE_INDEX:
+				btree_struct = btree_read_header(arguments[2]);
+				offset = search_btree(btree_struct, convertePrefixo(arguments[4]));
+				displayVehicleOffset(arguments[1], offset);
+				break;
+			case WHERE_LINE_INDEX:
+				btree_struct = btree_read_header(arguments[2]);
+				offset = search_btree(btree_struct, atoi(arguments[4]));
+				displayLineOffset(arguments[1], offset);
+				break;
+			case INSERTION_VEHICLE_INDEX:
+				binPointer = openFile(arguments[FILE_NAME], "r+");
+				vehiclesTable = readVehicleBinary(binPointer);
+				btree_struct = btree_read_header(arguments[2]);
+				if(vehiclesTable == NULL) {
+					closeFile(binPointer);
+					break;
+				}
+
+				insertVehicleEntriesBTree(vehiclesTable, atoi(arguments[3]), binPointer, btree_struct);
+				closeFile(binPointer);
+				freeVehicleTable(vehiclesTable);
+
+				btree_delete(btree_struct);
+				binarioNaTela(arguments[FILE_NAME]);
+				break;
+			case INSERTION_LINE_INDEX:
+				binPointer = openFile(arguments[FILE_NAME], "r+");
+				linesTable = readLineBinary(binPointer);
+				btree_struct = btree_read_header(arguments[2]);
+				if(linesTable == NULL) {
+					closeFile(binPointer);
+					break;
+				}
+
+				insertLineEntriesBTree(linesTable, atoi(arguments[3]), binPointer, btree_struct);
+				closeFile(binPointer);
+				freeLineTable(linesTable);
+
+				btree_delete(btree_struct);
 				binarioNaTela(arguments[FILE_NAME]);
 				break;
 		}

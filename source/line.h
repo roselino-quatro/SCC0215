@@ -121,4 +121,22 @@ void insertLineEntries(LTable* table,int qty,FILE* bin);
  */
 BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name);
 
+/****
+ * imprime um registro usando o offset fornecido pelo search da btree
+ * 
+ * @param file_name nome do arquivo a ser lido
+ * @param offset offset aonde está o registro a ser impresso
+ */
+void displayLineOffset(char* file_name, long offset);
+
+/****
+ * Insere novos registros em um arquivo e indexa na arvore b lendo do stdin
+ * 
+ * @param table tabela a receber as novas entradas
+ * @param qty quantidade de entradas que vao ser lidas
+ * @param bin arquivo que vai receber as novas entradas
+ * @param btree_struct header da btree sendo usada
+ */
+void insertLineEntriesBTree(LTable* table, int qty, FILE* bin, BTree* btree_struct);
+
 #endif
