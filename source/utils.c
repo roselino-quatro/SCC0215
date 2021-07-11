@@ -5,6 +5,9 @@
 char** getFields(int qty,char* src){
 	char** fields = malloc((qty+1) *sizeof(char*));
 	char* field = src;
+	for(int i = 0; i < qty+1; i++) {
+		fields[i] = NULL;
+	}
 
 	int pos = 0;
 	int len = strcspn(field,",");
@@ -15,7 +18,6 @@ char** getFields(int qty,char* src){
 		len = strcspn(field,",");
 	}
 	
-	fields[pos] = NULL;
 	return fields;
 }
 

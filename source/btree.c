@@ -48,9 +48,13 @@ void btree_write_status(FILE* btree_file,char status) {
 }
 
 BTree* btree_read_header(char* file_name) {
-	if (!file_name) return NULL;
+	if (file_name == NULL) return NULL;
 
 	FILE* btree_file = openFile(file_name, "rb");
+	if(btree_file == NULL || fgetc(btree_file) != '1') {
+		return NULL;
+	}
+	rewind(btree_file);
 	BTree* btree_struct = malloc(sizeof(BTree));
 
 	fread(&btree_struct->status, sizeof(char), 1, btree_file);
@@ -86,7 +90,7 @@ BTree* btree_new(char* file_name) {
 
 void btree_delete(BTree* btree) {
 	if(btree == NULL || btree->file_name == NULL) {
-
+		return;
 	}
 	free(btree->file_name);
 	free(btree);

@@ -366,12 +366,19 @@ void insertLineEntries(LTable* table,int qty,FILE* bin){
 
 // Creates a BTree from a binary file
 BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name) {
-	// Creating file and header info
-	BTree* btree_struct = btree_new(file_origin_name);
 
 	// Opening file to be read
-	FILE* origin_file = openFile(file_dest_name, "rb");
-	if(btree_struct == NULL || origin_file == NULL) {
+	FILE* origin_file = openFile(file_origin_name, "rb");
+
+	if(origin_file == NULL || fgetc(origin_file) != '1') {
+		printf("Falha no processamento do arquivo.\n");
+		return NULL;
+	}
+
+	// Creating file and header info
+	BTree* btree_struct = btree_new(file_dest_name);
+	
+	if(btree_struct == NULL) {
 		printf("Falha no processamento do arquivo.\n");
 		return NULL;
 	}
@@ -400,6 +407,9 @@ BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name) {
 // imprime um registro usando o offset fornecido pelo search da btree
 void displayLineOffset(char* file_name, long offset) {
 	if(file_name == NULL) return;
+	if(offset == -1) {
+		printf("Registro inexistente.\n");
+	}
 
 	FILE* line_file = openFile(file_name, "rb");
 

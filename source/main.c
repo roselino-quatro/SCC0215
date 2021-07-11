@@ -47,7 +47,7 @@ int main(){
 		cleanString(command);
 
 		op = atoi(command);
-		arguments = getFields(4, command);
+		arguments = getFields(5, command);
 		switch(op) {
 			case CREATE_VEHICLE:
 				csvPointer = openFile(arguments[FILE_NAME], "r");
@@ -181,7 +181,9 @@ int main(){
 				binPointer = openFile(arguments[FILE_NAME], "r+");
 				vehiclesTable = readVehicleBinary(binPointer);
 				btree_struct = btree_read_header(arguments[2]);
-				if(vehiclesTable == NULL) {
+				if(vehiclesTable == NULL || btree_struct == NULL) {
+					printf("Falha no processamento do arquivo.\n");
+					for(int i = 0; i < atoi(arguments[3]); i++) free(readline(stdin));
 					closeFile(binPointer);
 					break;
 				}
@@ -197,7 +199,9 @@ int main(){
 				binPointer = openFile(arguments[FILE_NAME], "r+");
 				linesTable = readLineBinary(binPointer);
 				btree_struct = btree_read_header(arguments[2]);
-				if(linesTable == NULL) {
+				if(linesTable == NULL || btree_struct == NULL){
+					printf("Falha no processamento do arquivo.\n");
+					for(int i = 0; i < atoi(arguments[3]); i++) free(readline(stdin));
 					closeFile(binPointer);
 					break;
 				}
