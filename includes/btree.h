@@ -62,7 +62,4 @@ long search_btree(Btree* btree,int searched_key);
 */
 void insert_btree(Btree* btree,int new_key,long byteoffset);
 
-// FIXME: DELETE THIS FUNCTION
-void node_print(Btree* btree,int rrn);
-
 #endif

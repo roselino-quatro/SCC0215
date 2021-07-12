@@ -364,8 +364,7 @@ void insert_btree(Btree* btree,int new_key,long byteoffset){
 	FILE* btree_file = fopen(btree->file_name, "rb+");
 
 	// 1. Initiliaze Node* stack. Necessary because algorithm is naturally recursive
-	// PLACEHOLDER: constant stack size - use log2(element_quantity) to get height/depth
-	int btree_depth = 30; // int btree_depth = log2(btree->RRNproxNo-1);
+	int btree_depth = 30;
 	BtreeNode** node_stack = malloc(btree_depth * sizeof(BtreeNode*));
 	node_stack[0] = NULL;
 	int stack_top = 0;
@@ -434,30 +433,4 @@ void insert_btree(Btree* btree,int new_key,long byteoffset){
 	for (int i = stack_len; i > 0; i--) free(node_stack[i]);
 	free(node_stack);
 	fclose(btree_file);
-}
-
-// FIXME: DELETE THIS FUNCTION
-void node_print(Btree* btree,int rrn) {
-	BtreeNode* node = node_read(btree, rrn);
-	printf("  ———— Node %d | %s ————  \n",node->node_rrn,(node->is_leaf == '1')? "yes" : "no");
-
-	printf("key:");
-	for (int i = 0; i < KEY_QUANTITY; i++) {
-		printf(" | %d",node->keys[i]);
-	}
-	printf("\n");
-
-	printf("off:");
-	for (int i = 0; i < KEY_QUANTITY; i++) {
-		printf(" | %ld",node->offsets[i]);
-	}
-	printf("\n");
-
-	printf("chi:");
-	for (int i = 0; i < CHILD_QUANTITY; i++) {
-		printf(" | %d",node->children[i]);
-	}
-	printf("\n\n");
-
-	free(node);
 }

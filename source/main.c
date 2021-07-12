@@ -163,7 +163,6 @@ void insert_into(int op,char* bin_name,char* btree_name,int quantity) {
 
 	fseek(bin, 0, SEEK_END);
 	// 3. Loop processando input: lê registro -> adiciona ao .bin -> adiciona na btree
-	char* input_line;
 	for (int i = 0; i < quantity; i++) {
 		// 3.1 Lê o input e passa pro formato csv
 		char* input_line = readline(stdin);
