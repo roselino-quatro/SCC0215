@@ -25,36 +25,44 @@ typedef struct BTREE_INDEX_HEADER {
 	int RRNproxNo;     // RRN of next insertion in FILE. Starts with 0 and increases with evey addition
 	char _padding[HEADER_PADDING_LEN]; // Char padding filled with '@' for FILE consistency
 	char* file_name;   // Internal btree file name used for `fopen` and `fclose` in an easier way.
-} BTree;
+} Btree;
 
 /**
 * Initiliaze a btree struct and file with name `file_name`.
 * Write the btree header into file.
 * In case `file_name == NULL` , do nothing and return `NULL`
 */
-BTree* btree_new(char* file_name);
+Btree* btree_new(char* file_name);
 
 /****
  * Returns the reader from a btree file
  */
-BTree* btree_read_header(char* file_name);
+Btree* btree_read_header(char* file_name);
+
+/**
+* Write btree header in the btree file
+*/
+void btree_write_header(Btree* btree);
 
 /**
 * Free all memory of `btree`.
 */
-void btree_delete(BTree* btree);
+void btree_delete(Btree* btree);
 
 /**
 * Search the `btree` for `searched_key`.
 * @return `byteoffset` on sucess.
 * @return `-1` if not found.
 */
-long search_btree(BTree* btree,int searched_key);
+long search_btree(Btree* btree,int searched_key);
 
 /**
 * Insert a {new_key: byteoffset} pair into the btree.
 * May do several file writes internally.
 */
-void insert_btree(BTree* btree,int new_key,long byteoffset);
+void insert_btree(Btree* btree,int new_key,long byteoffset);
+
+// FIXME: DELETE THIS FUNCTION
+void node_print(Btree* btree,int rrn);
 
 #endif

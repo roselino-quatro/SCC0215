@@ -1,5 +1,5 @@
 #Name of end binary
-PROGNAME = arquivost1
+PROGNAME = arquivost2
 
 #Compiler and Linker flags and options
 CC := gcc
@@ -8,6 +8,9 @@ CFLAGS := -Wall -Werror -g
 #Folder with all necessary .c files
 SRC_F = ./source
 C_SRCS := $(wildcard ${SRC_F}/*.c)
+
+# Folder with all necessary .h files
+INCLUDE_F = ./includes
 
 #Folder to store the matching .o files
 OBJ_F = ./objs
@@ -34,7 +37,7 @@ ${OBJ_F}:
 ${OBJ_F}/%.o: ${SRC_F}/%.c
 	@echo $@ $<
 	@echo "Creating $@ object"
-	@${CC} ${CFLAGS} -c $< -o $@
+	@${CC} -I ${INCLUDE_F} ${CFLAGS} -c $< -o $@
 
 run:
 	@./$(PROGNAME)

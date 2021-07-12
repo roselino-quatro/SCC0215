@@ -1,29 +1,49 @@
 // Gabriel Victor Cardoso Fernandes nUsp 11878296
 // Lourenço de Salles Roselino nUsp 11796805
-#include "utils.h"
+#include "../includes/utils.h"
 
-char** getFields(int qty,char* src){
-	char** fields = malloc((qty+1) *sizeof(char*));
-	char* field = src;
-	for(int i = 0; i < qty+1; i++) {
-		fields[i] = NULL;
+int argument_quantity(char* arg_string) {
+	// 1. Inicia contador de espaços
+	int space_qty = 0;
+
+	// 2. Cria ponteiro e anda com ele na string até parar no \0
+	// A cada espaço achado, incrementa quantidade
+	char* c = arg_string;
+	while (*c != '\0') {
+		if (*c == ' ') space_qty++;
+		c++;
 	}
 
-	int pos = 0;
-	int len = strcspn(field,",");
-	while(len != 0){
-		fields[pos++] = strndup(field,len);
-		field = field + len + 1;	// Advance field pointer and skip the delim
-		if(*(field-1) == '\0') break;
-		len = strcspn(field,",");
-	}
-	
-	return fields;
+	return space_qty+1; // Quantidade de argumentos é sempre qtd_espacos+1
 }
 
-int memcpyField(void* dest,const void* src,size_t n){
-	memcpy(dest,src,n);
-	return n;
+char** arguments_get(char* arg_string) {
+	if (arg_string == NULL) return NULL;
+
+	// 1. Pega a quantidade de argumentos e aloca vetor de strings com esse tamanho
+	int arg_qty = argument_quantity(arg_string);
+	char** arguments = malloc((arg_qty+1) * sizeof(char*));
+
+	// 2. Processa a arg_string, extraindo os argumentos
+	char* arg = arg_string;
+	for (int i = 0; i < arg_qty; i++) {
+		int arg_len = strcspn(arg, " ");
+		arguments[i] = strndup(arg, arg_len);
+
+		arg += arg_len + 1; // Move o ponteiro para o proximo argumento
+	}
+	arguments[arg_qty] = NULL; // Vetor de argumentos é terminado em nulo
+
+	return arguments;
+}
+
+void arguments_free(char** arguments) {
+	int pos = 0;
+	while (arguments[pos] != NULL) {
+		free(arguments[pos]);
+		pos++;
+	}
+	free(arguments);
 }
 
 #define READLINE_RATIO_ 1.5
@@ -45,23 +65,35 @@ char* readline(FILE* fstream){
 	return line;
 }
 
-void cleanString(char* str){
-	if(str[0] == '\0') return;
-	char* cur = str, *nxt = str;
-	char inField = 0;	// inField state: true -> copy chars , false -> skip " and ' ' turns into ,
-	int hasQuotes = 0;
+void string_to_csv(char* string){
+	if(string[0] == '\0') return;
+	char* cur = string, *nxt = string;
+	bool in_field = false;   // in_field state variable
+	bool has_quotes = false;
 
-	while(*(nxt+1) != '\0'){
-		if(*nxt == '\"'){	// " triggers inField state switch
-			inField = !inField;
-			hasQuotes = 1;
-			nxt++;
-		} 
+	// Loop that extracts the fields in string, and separates them by ,
+	// To do this, we use 2 pointers. One is current position, the other is next valid position.
+	// Every time next is valid, copy it to current. Otherwhise, skip delimiters " and space (' ').
+	while(*(nxt) != '\0'){
+		if(*nxt == '\"'){   // " char triggers state switch
+			in_field = !in_field; // flip "in field" state to "not in field", and vice-versa
+			has_quotes = true;
+			nxt++; // Jump from delimiter to next position
+		}
 
-		if(!inField && *nxt == ' ') *nxt = ','; // Every ' ' outside a field turns into ,
-		*cur++ = *nxt++;
+		if (!in_field && *nxt == ' ') { // When NOT in a field and next pos is a space char
+			*nxt = ','; // turn space char into ,
+		}
+
+		*cur = *nxt; // Next is valid: copy it's char to current position
+		if (*nxt == '\0') {
+			break;
+		}
+		cur++;
+		nxt++;
 	}
-	if(hasQuotes == 1) {
+
+	if(has_quotes) {
 		*(cur) = '\0';
 	} else {
 		*(++cur) = '\0';
@@ -96,25 +128,6 @@ void binarioNaTela(char *nomeArquivoBinario) { /* Você não precisa entender o 
 	free(mb);
 	fclose(fs);
 }
-
-// Abre um arquivo tratando erros
-FILE* openFile(const char* name, const char* mode) {
-	if(name == NULL || mode == NULL) perror("Null values in OpenFIle");
-
-	FILE* arq = fopen(name, mode);
-
-	return arq;
-}
-
-// Abre um arquivo tratando erros
-bool closeFile(FILE* file) {
-	if(file == NULL) return false;
-
-	fclose(file);
-
-	return true;
-}
-
 
 /*  
     Converte o prefixo do veículo para int

@@ -1,4 +1,6 @@
-#include "btree.h"
+// Gabriel Victor Cardoso Fernandes nUsp 11878296
+// Lourenço de Salles Roselino nUsp 11796805
+#include "../includes/btree.h"
 
 // Get the byte offset of a Node / Page File, given it's `rrn`.
 #define node_byteoffset(rrn) (PAGE_SIZE + PAGE_SIZE*rrn)
@@ -23,6 +25,9 @@ int binary_search_pos(int* array,int arr_len,int key) {
 		}
 	}
 
+	// If key is bigger than the key at the pos it would be, increment its pos
+	if (key > array[middle]) middle++;
+
 	return middle;
 }
 
@@ -30,10 +35,9 @@ int binary_search_pos(int* array,int arr_len,int key) {
 * Write current Btree header into it's file.
 * Will `fopen` and then `fclose` internally.
 */
-void btree_write_header(BTree* btree) {
-	//printf("Writing header\n");
-	FILE* btree_file = fopen(btree->file_name, "r+");
-	rewind(btree_file);
+void btree_write_header(Btree* btree) {
+	// printf("Writing header\n");
+	FILE* btree_file = fopen(btree->file_name, "rb+");
 
 	fwrite(&(btree->status), sizeof(char), 1, btree_file);
 	fwrite(&btree->noRaiz, sizeof(int), 1, btree_file);
@@ -47,34 +51,34 @@ void btree_write_status(FILE* btree_file,char status) {
 	fwrite(&status, sizeof(char), 1, btree_file);
 }
 
-BTree* btree_read_header(char* file_name) {
+Btree* btree_read_header(char* file_name) {
 	if (file_name == NULL) return NULL;
 
-	FILE* btree_file = openFile(file_name, "rb");
+	FILE* btree_file = fopen(file_name, "rb");
 	if(btree_file == NULL || fgetc(btree_file) != '1') {
 		return NULL;
 	}
 	rewind(btree_file);
-	BTree* btree_struct = malloc(sizeof(BTree));
+	Btree* btree_struct = malloc(sizeof(Btree));
 
 	fread(&btree_struct->status, sizeof(char), 1, btree_file);
 	fread(&btree_struct->noRaiz, sizeof(int), 1, btree_file);
 	fread(&btree_struct->RRNproxNo, sizeof(int), 1, btree_file);
-	fread(btree_struct->_padding, sizeof(char), HEADER_PADDING_CHAR, btree_file);
-	btree_struct->file_name = file_name;
+	fread(btree_struct->_padding, sizeof(char), HEADER_PADDING_LEN, btree_file);
+	btree_struct->file_name = strdup(file_name);
 
 	fclose(btree_file);
 
 	return btree_struct;
 }
 
-BTree* btree_new(char* file_name) {
+Btree* btree_new(char* file_name) {
 	if (!file_name) return NULL;
 	
 	// 1. Initiliaze Btree struct with default values.
-	BTree* btree = malloc(sizeof(BTree));
-	//printf("Alocando %lu bytes do tamanho da btree\n",sizeof(BTree));
-	btree->status = '1';
+	Btree* btree = malloc(sizeof(Btree));
+	// printf("Alocando %lu bytes do tamanho da btree\n",sizeof(Btree));
+	btree->status = '0';
 	btree->noRaiz = -1;
 	btree->RRNproxNo = -1;
 	for (int i = 0; i < HEADER_PADDING_LEN; i++) {
@@ -82,13 +86,20 @@ BTree* btree_new(char* file_name) {
 	}
 	btree->file_name = strdup(file_name);
 
-	// 2. Initialize Btree File with default header.
+	// 2. If btree file doesn't already exist, create it.
+	FILE* btree_file = fopen(btree->file_name, "rb+");
+	if (btree_file == NULL) {
+		btree_file = fopen(btree->file_name, "wb");
+	}
+	fclose(btree_file);
+
+	// 3. Initialize Btree File with default header.
 	btree_write_header(btree);
 
 	return btree;
 }
 
-void btree_delete(BTree* btree) {
+void btree_delete(Btree* btree) {
 	if(btree == NULL || btree->file_name == NULL) {
 		return;
 	}
@@ -120,7 +131,7 @@ typedef struct BTREENODE {
 * Create a new Node with no keys and no children.
 * By default, new Nodes are considered leaf nodes.
 */
-BtreeNode* node_new(BTree* btree) {
+BtreeNode* node_new(Btree* btree) {
 	// 1. Initialize node with default values and next btree rrn
 	BtreeNode* node = malloc(sizeof(BtreeNode));
 	node->is_leaf = '1';
@@ -143,14 +154,14 @@ BtreeNode* node_new(BTree* btree) {
 * Reads a `Node*` from `btree->file` in given `rrn`.
 * Does nothing if `rrn == -1`.
 */
-BtreeNode* node_read(BTree* btree,int rrn){
+BtreeNode* node_read(Btree* btree,int rrn){
 	if (rrn == -1) return NULL;
 
 	// 0. Open btree_file
 	FILE* btree_file = fopen(btree->file_name, "rb+");
 
 	// 1. Read Node data to buffer.
-	//printf("Reading node of rrn %d at byteoffset %d\n",rrn,node_byteoffset(rrn));
+	// printf("Reading node of rrn %d at byteoffset %d\n",rrn,node_byteoffset(rrn));
 	char node_data[PAGE_SIZE];
 	fseek(btree_file,node_byteoffset(rrn),SEEK_SET);
 	fread(&node_data,sizeof(char),PAGE_SIZE,btree_file);
@@ -182,14 +193,14 @@ BtreeNode* node_read(BTree* btree,int rrn){
 * is self contained.
 * Does nothing if `node == NULL`.
 */
-void node_write(BTree* btree,BtreeNode* node){
+void node_write(Btree* btree,BtreeNode* node){
 	if (!node) return;
 
 	// 0. Open btree_file
 	FILE* btree_file = fopen(btree->file_name, "rb+");
 
 	// 1. Seek to Node byteoffset
-	//printf("Writing Node of rrn %d at byteoffset %d\n",node->node_rrn,node_byteoffset(node->node_rrn));
+	// printf("Writing Node of rrn %d at byteoffset %d\n",node->node_rrn,node_byteoffset(node->node_rrn));
 	fseek(btree_file,node_byteoffset(node->node_rrn),SEEK_SET);
 
 	// 2. Build buffer with Node internal data, in specified file representation
@@ -219,30 +230,30 @@ void node_write(BTree* btree,BtreeNode* node){
 * Interiorly mutates key, turning it into new median value (the value that actually gets promoted).
 * @returns right_node resulted from splitting.
 */
-BtreeNode* node_split(BTree* btree,BtreeNode* node,int* key,int right_child,long* offset) {
+BtreeNode* node_split(Btree* btree,BtreeNode* node,int right_child,int* key,long* offset) {
 	// 0. Simulate overflowing insertion
 	int overflow_keys[KEY_QUANTITY+1];
 	int overflow_children[CHILD_QUANTITY+1];
 	long overflow_offsets[KEY_QUANTITY+1];
 
 	int key_pos = 0;
-	while (*key > node->keys[key_pos]) {
-		overflow_keys[key_pos]     = node->keys[key_pos];
+	for (; key_pos < KEY_QUANTITY; key_pos++) {
+		if (*key < node->keys[key_pos]) break;
 		overflow_children[key_pos] = node->children[key_pos];
+		overflow_keys[key_pos]     = node->keys[key_pos];
 		overflow_offsets[key_pos]  = node->offsets[key_pos];
-		key_pos++;
 	}
 	overflow_children[key_pos] = node->children[key_pos];
 
 	// Insert key, offset and right_child_pointer of previous split
-	overflow_keys[key_pos]       = *key;
 	overflow_children[key_pos+1] = right_child;
+	overflow_keys[key_pos]       = *key;
 	overflow_offsets[key_pos]    = *offset;
 
 	for (int i = KEY_QUANTITY; i > key_pos; i--) { // Right shift elements after key
-		overflow_keys[i]     = node->keys[i-1];
 		overflow_children[i+1] = node->children[i];
-		overflow_offsets[i]  = node->offsets[i-1];
+		overflow_keys[i]       = node->keys[i-1];
+		overflow_offsets[i]    = node->offsets[i-1];
 	}
 
 	// 1. Find median key on overflowed_keys
@@ -252,18 +263,19 @@ BtreeNode* node_split(BTree* btree,BtreeNode* node,int* key,int right_child,long
 
 	// 2. Update current node (left part of split) with results from overflowing insertion
 	for (int i = 0; i < split_pos; i++) {
-		node->keys[i]     = overflow_keys[i];
 		node->children[i] = overflow_children[i];
+		node->keys[i]     = overflow_keys[i];
 		node->offsets[i]  = overflow_offsets[i];
 	}
+	node->children[split_pos] = overflow_children[split_pos];
 
 	// 3. Build new Node (right part of split) that receives all keys to the right of key_pos
 	BtreeNode* right = node_new(btree);
 	right->is_leaf = node->is_leaf;
 	int r_pos = split_pos+1;
 	for (int i = 0; i < split_pos; i++) {
-		right->keys[i]     = overflow_keys[r_pos];
 		right->children[i] = overflow_children[r_pos];
+		right->keys[i]     = overflow_keys[r_pos];
 		right->offsets[i]  = overflow_offsets[r_pos];
 		right->key_quantity++;
 
@@ -273,9 +285,9 @@ BtreeNode* node_split(BTree* btree,BtreeNode* node,int* key,int right_child,long
 	
 	// 4. Set the right half left_split to NULL
 	for (int i = split_pos; i < KEY_QUANTITY; i++) {
-		node->keys[i]     = -1;
 		node->children[i+1] = -1;
-		node->offsets[i]  = -1;
+		node->keys[i]       = -1;
+		node->offsets[i]    = -1;
 		node->key_quantity--;
 	}
 
@@ -289,33 +301,34 @@ BtreeNode* node_split(BTree* btree,BtreeNode* node,int* key,int right_child,long
 * DO NOT call this function if a node is already full
 */
 int node_add_key(BtreeNode* node,int new_key,long byteoffset) {
+	// 1. Iterar até achar posicao da chave
 	int key_pos = 0;
-	while (new_key > node->keys[key_pos]) { // Iterate until new_key position is found
+	for (; key_pos < node->key_quantity; key_pos++) { // Iterate until new_key position is found
 		if (node->keys[key_pos] == -1) break;
-		key_pos++;
+		if (new_key < node->keys[key_pos]) break; // Quando a prox é maior, achamos a pos
 	}
 
+	// 2. Right shift todas chaves depois da atual
 	for (int i = node->key_quantity; i > key_pos; i--) {
 		node->children[i+1] = node->children[i];
-		node->keys[i] = node->keys[i-1];
-		node->offsets[i] = node->offsets[i-1];
+		node->keys[i]       = node->keys[i-1];
+		node->offsets[i]    = node->offsets[i-1];
 	}
-	node->children[key_pos+1] = node->children[key_pos];
+	node->children[key_pos+1] = -1;
 
-	node->children[key_pos] = -1;         // Set subtree pointer to NULL
-	node->keys[key_pos] = new_key;        // Put new_key where it should be
-	node->offsets[key_pos] = byteoffset;  // Put byteoff corresponding to new_key_pos
+	if (key_pos == 0) node->children[key_pos] = -1; // Set subtree pointer to NULL
+	node->keys[key_pos]     = new_key;              // Put new_key where it should be
+	node->offsets[key_pos]  = byteoffset;           // Put byteoff corresponding to new_key_pos
 	node->key_quantity++;
 
 	return key_pos;
 }
 
-long search_btree(BTree* btree,int searched_key){
+long search_btree(Btree* btree,int searched_key){
 	if (btree->noRaiz == -1 || searched_key == -1) return -1; // RRN = -1 -> node doesn't exist
 
 	// 0. Open btree_file
 	FILE* btree_file = fopen(btree->file_name, "rb+");
-	btree_write_status(btree_file, '0');
 
 	// 1. read root node using root_RRN from btree_header 
 	BtreeNode* node = node_read(btree,btree->noRaiz);
@@ -323,31 +336,32 @@ long search_btree(BTree* btree,int searched_key){
 		// 2. Binary searching for the key inside a node
 		int searched_key_pos = binary_search_pos(node->keys, node->key_quantity, searched_key);
 		if (node->keys[searched_key_pos] == searched_key) {
-			btree_write_status(btree_file, '1');
+			long offset = node->offsets[searched_key_pos];
+			
+			free(node);
 			fclose(btree_file);
-			return node->offsets[searched_key_pos]; // If we find the key, return the associated byteoffset!
+
+			return offset; // If we find the key, return the associated byteoffset!
 		}
 
 		// 3. Follow child pointer to next node and try searching again
-		if (searched_key > node->keys[searched_key_pos]) {
-			searched_key_pos++; // If searched_key_pos is bigger than key, go to next pointer
-		}
+		// if (searched_key > node->keys[searched_key_pos]) {
+		// 	searched_key_pos++; // If searched_key_pos is bigger than key, go to next pointer
+		// }
 		int child_rrn = node->children[searched_key_pos];
 		
 		free(node);
 		node = node_read(btree,child_rrn);
 	}
 
-	btree_write_status(btree_file, '1');
 	fclose(btree_file);
 	return -1; // node was not found, return -1
 }
 
-void insert_btree(BTree* btree,int new_key,long byteoffset){
+void insert_btree(Btree* btree,int new_key,long byteoffset){
 	if (new_key == -1 || byteoffset == -1) return;
 	// 0. open btree_file
 	FILE* btree_file = fopen(btree->file_name, "rb+");
-	btree_write_status(btree_file, '0');
 
 	// 1. Initiliaze Node* stack. Necessary because algorithm is naturally recursive
 	// PLACEHOLDER: constant stack size - use log2(element_quantity) to get height/depth
@@ -366,13 +380,12 @@ void insert_btree(BTree* btree,int new_key,long byteoffset){
 		if (node->keys[new_key_pos] == new_key) {
 			for (int i = stack_top; i >= 0; i--) free(node_stack[i]);
 			free(node_stack);
-			btree_write_status(btree_file, '1');
 			fclose(btree_file);
 			return; // Exit function if key is found - no duplicates allowed
 		}
 
 		// 4. Follow child pointer to next node and try searching again!
-		if (new_key > node->keys[new_key_pos]) new_key_pos++; // If new_key is bigger than key at it's pos, go to next pointer
+		// if (new_key > node->keys[new_key_pos]) new_key_pos++; // If new_key is bigger than key at it's pos, go to next pointer
 		int child_rrn = node->children[new_key_pos];
 		node = node_read(btree,child_rrn);
 	}
@@ -390,7 +403,7 @@ void insert_btree(BTree* btree,int new_key,long byteoffset){
 		}
 		
 		// Split full node, promote new_key and byteoffset and finally add reference to right_child
-		right = node_split(btree, receiving_node, &new_key, right_child, &byteoffset);
+		right = node_split(btree, receiving_node, right_child, &new_key, &byteoffset);
 		left = receiving_node;
 
 		node_write(btree, left);
@@ -420,6 +433,31 @@ void insert_btree(BTree* btree,int new_key,long byteoffset){
 
 	for (int i = stack_len; i > 0; i--) free(node_stack[i]);
 	free(node_stack);
-	btree_write_header(btree);
 	fclose(btree_file);
+}
+
+// FIXME: DELETE THIS FUNCTION
+void node_print(Btree* btree,int rrn) {
+	BtreeNode* node = node_read(btree, rrn);
+	printf("  ———— Node %d | %s ————  \n",node->node_rrn,(node->is_leaf == '1')? "yes" : "no");
+
+	printf("key:");
+	for (int i = 0; i < KEY_QUANTITY; i++) {
+		printf(" | %d",node->keys[i]);
+	}
+	printf("\n");
+
+	printf("off:");
+	for (int i = 0; i < KEY_QUANTITY; i++) {
+		printf(" | %ld",node->offsets[i]);
+	}
+	printf("\n");
+
+	printf("chi:");
+	for (int i = 0; i < CHILD_QUANTITY; i++) {
+		printf(" | %d",node->children[i]);
+	}
+	printf("\n\n");
+
+	free(node);
 }

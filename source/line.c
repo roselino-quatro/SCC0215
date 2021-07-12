@@ -1,472 +1,100 @@
 // Gabriel Victor Cardoso Fernandes nUsp 11878296
 // Lourenço de Salles Roselino nUsp 11796805
-#include "line.h"
+#include "../includes/line.h"
 
-LInfo* LInfoFromString(char* src){
-	LInfo* info = malloc(sizeof(LInfo));
-	info->stable = '0';
-	info->byteOffset = 82;
-	info->qty = 0;
-	info->rmvQty = 0;
+// Tamanho, em bytes, dos campos fixos de todo registro do tipo "veiculo"
+#define LINE_FIXED_FIELDS_LEN 18
 
-	char** fields = getFields(4,src);
-	memcpyField(info->code,fields[0],15);
-	memcpyField(info->card,fields[1],13);
-	memcpyField(info->name,fields[2],13);
-	memcpyField(info->line,fields[3],24);
+char* line_from_string(char* entry_string) {
+	// 0. Alocar tamanho padrao que garante caber um registro
+	char* entry = malloc(200);
 
-	int pos = 0;
-	while(fields[pos]) free(fields[pos++]);
-	free(fields);
-
-	return info;
-}
-
-LInfo* LInfoFromBytes(char* bytes){
-	LInfo* info = malloc(sizeof(LInfo));
-
-	int shift = 0;
-	shift += memcpyField(&info->stable,bytes+shift,sizeof(char));
-	shift += memcpyField(&info->byteOffset,bytes+shift,sizeof(long));
-	shift += memcpyField(&info->qty,bytes+shift,sizeof(int));
-	shift += memcpyField(&info->rmvQty,bytes+shift,sizeof(int));
-	shift += memcpyField(info->code,bytes+shift,15*sizeof(char));
-	shift += memcpyField(info->card,bytes+shift,13*sizeof(char));
-	shift += memcpyField(info->name,bytes+shift,13*sizeof(char));
-	shift += memcpyField(info->line,bytes+shift,24*sizeof(char));
-
-	return info;
-}
-
-char* LInfoAsBytes(LInfo* info){
-	char* bytes = malloc(84);
-
-	int shift = 0;
-	shift += memcpyField(bytes+shift,&info->stable,sizeof(char));
-	shift += memcpyField(bytes+shift,&info->byteOffset,sizeof(long));
-	shift += memcpyField(bytes+shift,&info->qty,sizeof(int));
-	shift += memcpyField(bytes+shift,&info->rmvQty,sizeof(int));
-	shift += memcpyField(bytes+shift,info->code,15*sizeof(char));
-	shift += memcpyField(bytes+shift,info->card,13*sizeof(char));
-	shift += memcpyField(bytes+shift,info->name,13*sizeof(char));
-	shift += memcpyField(bytes+shift,info->line,24*sizeof(char));
-
-	return bytes;
-}
-
-LEntry* LEntryFromString(char* src){
-	LEntry* entry = malloc(sizeof(LEntry));
-	entry->size = 18;
-
-	char** fields = getFields(4,src);
-	if(fields[0][0] != '*'){
-		entry->lineCode = atoi(fields[0]);
-		entry->isPresent = '1';
-	} else {
-		entry->lineCode = atoi(&fields[0][1]);
-		entry->isPresent = '0';
-	};
-
-	entry->card = (strlen(fields[1]) == 1)? *fields[1] : '\0';
+	// 1. Percorrer a string de registro, interpretando seus campos
+	// e transferindo para representacao binaria.
+	// Metacampo 'removido'
+	entry[0] = (entry_string[0] == '*')? '0' : '1';
 	
+	// Campo 1: codigo da linha | Não aceita valor nulo!
+	char* field = entry_string;
+	int line_code = atoi(field);
+	memcpy(&entry[5], &line_code, sizeof(int));
 
-	strcpy(entry->name,fields[2]);
-	if(!strncmp(entry->name,"NULO",4)){
-		entry->name[0] = '\0';
-		entry->nameLen = 0;
-	} else {
-		entry->nameLen = strlen(entry->name);
-	}
+	// Campo 2: "aceita cartao?" | Nulo quando campo esta vazio (contem apenas delimitador ,)
+	field = strchr(field, ',') + 1; // Jump to next field
+	entry[9] = (field[0] != ',')? field[0] : '\0';
 
-	strcpy(entry->color,fields[3]);
-	if(!strncmp(entry->color,"NULO",4)){
-		entry->color[0] = '\0';
-		entry->colorLen = 0;
-	} else {
-		entry->colorLen = strlen(entry->color);
-	}
+	// Campo 3: tamanho do campo "nome"
+	field = strchr(field, ',') + 1;
+	int name_len = strcspn(field, ",");
+	memcpy(&entry[10], &name_len, sizeof(int));
 
-	entry->size += entry->nameLen + entry->colorLen;
+	// Campo 4: nome
+	memcpy(&entry[14], &field, name_len);
 
-	int pos = 0;
-	while(fields[pos]) free(fields[pos++]);
-	free(fields);
+	// Campo 5: tamanho do campo "cor da linha"
+	field = strchr(field, ',') + 1;
+	int color_len = strcspn(field, ",");
+	memcpy(&entry[14+name_len], &color_len, sizeof(int));
+
+	// Campo 6: cor da linha
+	memcpy(&entry[14+name_len+4], &field, color_len);
+
+	// Metacampo "tamanho registro"
+	// É a soma dos tamanhos de campos de tam. fixo + campos de tam. variavel
+	int entry_size = LINE_FIXED_FIELDS_LEN + name_len + color_len;
+	memcpy(&entry[1], &entry_size, sizeof(int));
+	
 	return entry;
+};
+
+int line_get_key(char* line_data) {
+	// 0. Acessa posicao do campo "codigo da linha" nos dados binarios.
+	int line_code;
+	memcpy(&line_code, &line_data[5], sizeof(int));
+
+	return line_code;
 }
 
-LEntry* LEntryFromBytes(char* bytes){
-	LEntry* entry = malloc(sizeof(LEntry));
+void display_line_from_data(char* line_data) {
+	// 1. Printando codigo da linha
+	// FIXME: por algum motivo nao tá no PDF???
+	int line_code;
+	memcpy(&line_code, &line_data[0], sizeof(int));
+	printf("Codigo da linha: %d\n",line_code);
 
-	int shift = 0;
-	shift += memcpyField(&entry->isPresent,bytes+shift,sizeof(char));
-	shift += memcpyField(&entry->size,bytes+shift,sizeof(int));
-	entry->size += 5;
-	shift += memcpyField(&entry->lineCode,bytes+shift,sizeof(int));
-	shift += memcpyField(&entry->card,bytes+shift,sizeof(char));
-	shift += memcpyField(&entry->nameLen,bytes+shift,sizeof(int));
-	shift += memcpyField(entry->name,bytes+shift,entry->nameLen*sizeof(char));
-	entry->name[entry->nameLen] = '\0';
-	shift += memcpyField(&entry->colorLen,bytes+shift,sizeof(int));
-	shift += memcpyField(entry->color,bytes+shift,entry->colorLen*sizeof(char));
-	entry->color[entry->colorLen] = '\0';
-
-	return entry;
-}
-
-char* LEntryAsBytes(LEntry* entry){
-	char* bytes = malloc(entry->size);
-
-	int shift = 0;
-	shift += memcpyField(bytes+shift,&entry->isPresent,sizeof(char));
-	entry->size -= 5;	// size = all - isPresent - size
-	shift += memcpyField(bytes+shift,&entry->size,sizeof(int));
-	entry->size += 5;	// size = all others + isPresent + size
-	shift += memcpyField(bytes+shift,&entry->lineCode,sizeof(int));
-	shift += memcpyField(bytes+shift,&entry->card,sizeof(char));
-	shift += memcpyField(bytes+shift,&entry->nameLen,sizeof(int));
-	if(entry->nameLen > 0){
-		shift += memcpyField(bytes+shift,entry->name,entry->nameLen*sizeof(char));
-	}
-	shift += memcpyField(bytes+shift,&entry->colorLen,sizeof(int));
-	if(entry->colorLen > 0){
-		shift += memcpyField(bytes+shift,entry->color,entry->colorLen*sizeof(char));
+	// 2. Printando nome da linha
+	int name_len;
+	memcpy(&name_len, &line_data[5], sizeof(int));
+	
+	if (name_len > 0) {
+		char* name = strndup(&line_data[9], name_len);
+		printf("Nome da linha: %s\n",name);
+		free(name);
+	} else {
+		printf("Nome da linha: campo com valor nulo\n");
 	}
 
-	return bytes;
-}
+	// 3. Printando cor da linha
+	int color_len;
+	memcpy(&color_len, &line_data[9+name_len], sizeof(int));
 
-// Lê e parsea o CSV do arquivo e armazena em uma struct
-LTable* readLineCsv(FILE* csv){
-	if(csv == NULL) {
-		printf("Falha no processamento do arquivo.\n");
-		return NULL;
+	if (color_len > 0) {
+		char* color = strndup(&line_data[9+name_len+4], color_len);
+		printf("Cor que descreve a linha: %s\n",color);
+		free(color);
+	} else {
+		printf("Nome da linha: campo com valor nulo\n");
 	}
 
-	LTable* table = malloc(sizeof(LTable));
-
-	char* headerString = readline(csv);
-	LInfo* info = LInfoFromString(headerString);
-	free(headerString);
-
-	// While there are lines in the csv, allocate and process
-	table->qty = 1;
-	table->lines = NULL;
-	int i = 0;
-	// char* entryString = readline(csv);
-	char* entryString;
-	while((entryString = readline(csv)) != NULL){
-		if(i+1 == table->qty){
-			table->qty *= 2;
-			table->lines = realloc(table->lines,table->qty * sizeof(LEntry));
-		}
-
-		LEntry* entry = LEntryFromString(entryString);
-		table->lines[i] = *entry;
-		free(entry);
-		(table->lines[i].isPresent == '1')? ++info->qty : ++info->rmvQty;
-		info->byteOffset += table->lines[i++].size;
-		free(entryString);
-	}
-
-	// Bind info to table header and fit lines to size
-	table->qty = i;
-	info->stable = '1';
-	table->header = info;
-	table->lines = realloc(table->lines,table->qty * sizeof(LEntry));
-	return table;
-}
-
-// Destructor que libera memoria alocada de uma struct LTable
-bool freeLineTable(LTable* table){
-	if (table == NULL) return false;
-
-	free(table->header);
-	free(table->lines);
-	free(table);
-
-	return true;
-}
-
-LTable* readLineBinary(FILE* bin){
-	if(bin == NULL || fgetc(bin) != '1'){
-		printf("Falha no processamento do arquivo.\n");
-		return NULL;
-	}
-	rewind(bin);
-
-	LTable* table = malloc(sizeof(LTable));
-
-	char buffer[140];
-	fread(buffer,sizeof(char),82,bin);
-	LInfo* info = LInfoFromBytes(buffer);
-
-	// Read all lines from binary file
-	table->qty = 1;
-	table->lines = NULL;
-	int i = 0;
-	while(fread(buffer,sizeof(char),5,bin) != 0){
-		if(i+1 == table->qty){
-			table->qty *= 2;
-			table->lines = realloc(table->lines,table->qty * sizeof(LEntry));
-		}
-
-		int entrySize;
-		memcpy(&entrySize,&buffer[1],sizeof(int));
-		fread(&buffer[5],sizeof(char),entrySize,bin);
-
-		LEntry* entry = LEntryFromBytes(buffer);
-		table->lines[i++] = *entry;
-		free(entry);
-		// TEST: Removed entry count, if read binary header is not trustworthy, value will be wrong!
-		// TEST: Removed byteoffset count also
-	}
-
-	// Bind info to table header and fit lines to size
-	table->qty = i;
-	info->stable = '1';
-	table->header = info;
-	table->lines = realloc(table->lines,table->qty * sizeof(LEntry));
-	return table;
-}
-
-// Transfere os dados de uma LTable para um arquivo binario seguindo as regras passadas nas especificaçẽos
-void writeLineBinary(LTable* table,FILE* bin){
-	if(bin == NULL){
-		printf("Falha no processamento do arquivo\n");
-		return;
-	}
-
-	// Write header data - mark the file as unstable until end of write
-	table->header->stable = '0';
-	char* header = LInfoAsBytes(table->header);
-	fwrite(header,sizeof(char),82,bin);
-	free(header);
-
-	for(int i = 0;i < table->qty;i++){
-		char* entry = LEntryAsBytes(&table->lines[i]);
-		fwrite(entry,sizeof(char),table->lines[i].size,bin);
-		free(entry);
-	}
-
-	rewind(bin);
-	fwrite("1",sizeof(char),1,bin);
-}
-
-void displayLine(LEntry* entry){
-	if(!entry) return;
-
-	printf("Codigo da linha: %d\n",entry->lineCode);
-	printf("Nome da linha: %s\n",(entry->nameLen != 0)? entry->name : "campo com valor nulo");
-	printf("Cor que descreve a linha: %s\n",entry->color);
-
-	if(entry->card == 'S'){
+	char aceita_cartao = line_data[4];
+	if(aceita_cartao == 'S'){
 		printf("Aceita cartao: PAGAMENTO SOMENTE COM CARTAO SEM PRESENCA DE COBRADOR\n\n");
-	} else if(entry->card == 'N'){
+	} else if(aceita_cartao == 'N'){
 		printf("Aceita cartao: PAGAMENTO EM CARTAO E DINHEIRO\n\n");
-	} else if(entry->card == 'F'){
+	} else if(aceita_cartao == 'F'){
 		printf("Aceita cartao: PAGAMENTO EM CARTAO SOMENTE NO FINAL DE SEMANA\n\n");
 	} else{
 		printf("Aceita cartao: campo com valor nulo\n\n");
 	}
-};
-
-// Familia de funções para a selectLineWhere
-bool matchLineCode(LEntry* entry,void* code){
-	return (entry->lineCode == atoi(code))? true : false;
-};
-
-bool matchLineAcceptCard(LEntry* entry,void* cardStatus){
-	if(entry->card == '\0') return false;
-	return (entry->card == *(char*)cardStatus)? true : false;
-};
-
-bool matchLineName(LEntry* entry,void* name){
-	if (entry->name[0] == '\0') return false;
-	return (strcmp(entry->name,(char*)name) == 0)? true : false;
-};
-
-bool matchLineColor(LEntry* entry,void* color){
-	if (entry->color[0] == '\0') return false;
-	return (strcmp(entry->color,(char*)color) == 0)? true : false;
-};
-
-
-// Imprime todos os registros não removidos de uma struct
-void selectLine(LTable* table){
-	if(table == NULL) {
-		return;
-	}
-
-	bool anyMatched = false;
-	for(int i = 0;i < table->qty;i++){
-		LEntry* entry = &table->lines[i];
-		if(entry->isPresent == '0') continue;
-
-		displayLine(entry);
-		anyMatched = true;
-	}
-
-	if (!anyMatched) printf("Registro inexistente.\n");
-}
-
-
-// Imprime os matchs de uma comparação dentro de uma struct Dat
-void selectLineWhere(LTable* table,void* key,bool (*match)(LEntry*,void*)){
-	if(table == NULL) {
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	}
-
-	bool anyMatched = false;
-	for(int i = 0;i < table->qty;i++){
-		LEntry* entry = &table->lines[i];
-		if (entry->isPresent == '0' || !(match(entry,key))) continue;
-
-		displayLine(entry);
-		anyMatched = true;
-	}
-
-	if (!anyMatched) printf("Registro inexistente.\n");
-}
-
-void insertLineEntries(LTable* table,int qty,FILE* bin){
-	rewind(bin);	// Rewind and mark binary as unstable
-	fwrite("0",sizeof(char),1,bin);
-	fseek(bin,0,SEEK_END);
-
-	table->lines = realloc(table->lines,(table->qty+qty)*sizeof(LEntry));
-	for(int i = 0;i < qty;i++){
-		char* entryString = readline(stdin);
-		cleanString(entryString);
-		LEntry* entry = LEntryFromString(entryString);
-		table->header->byteOffset += entry->size;
-
-		char* entryBytes = LEntryAsBytes(entry);
-		fwrite(entryBytes,sizeof(char),entry->size,bin);
-
-		(entry->isPresent == '1')? ++table->header->qty : ++table->header->rmvQty;
-
-		table->lines[i] = *entry;
-		free(entryString);
-		free(entryBytes);
-		free(entry);
-	}
-
-	table->qty += qty;
-	rewind(bin);	// Rewind and mark binary as stable
-	fwrite("1",sizeof(char),1,bin);
-	fwrite(&table->header->byteOffset,sizeof(long),1,bin);
-	fwrite(&table->header->qty,sizeof(int),1,bin);
-	fwrite(&table->header->rmvQty,sizeof(int),1,bin);
-}
-
-/*
- FUNÇÕES DO TRABALHO 2
-*/
-
-// Creates a BTree from a binary file
-BTree* lineBTreeFromBin(char* file_origin_name, char* file_dest_name) {
-
-	// Opening file to be read
-	FILE* origin_file = openFile(file_origin_name, "rb");
-
-	if(origin_file == NULL || fgetc(origin_file) != '1') {
-		printf("Falha no processamento do arquivo.\n");
-		return NULL;
-	}
-
-	// Creating file and header info
-	BTree* btree_struct = btree_new(file_dest_name);
-	
-	if(btree_struct == NULL) {
-		printf("Falha no processamento do arquivo.\n");
-		return NULL;
-	}
-
-	fseek(origin_file, 82, SEEK_SET);
-
-	int cod_linha;
-	long offset;
-	int reg_size; // For skipping registers
-	char removed;
-	while(!feof(origin_file)) { // Loop for reading registers and putting in the BTree
-		offset = ftell(origin_file);
-		fread(&removed, 1, sizeof(char), origin_file);
-		fread(&reg_size, 1, sizeof(int), origin_file);
-		fread(&cod_linha, 1, sizeof(int), origin_file);
-		if(removed != '0') {
-			insert_btree(btree_struct, cod_linha, offset);
-		}
-		fseek(origin_file, reg_size - 9, SEEK_CUR);
-	}
-	fclose(origin_file);
-	
-	return btree_struct;
-}
-
-// imprime um registro usando o offset fornecido pelo search da btree
-void displayLineOffset(char* file_name, long offset) {
-	if(file_name == NULL) return;
-	if(offset == -1) {
-		printf("Registro inexistente.\n");
-	}
-
-	FILE* line_file = openFile(file_name, "rb");
-
-	fseek(line_file, offset+1, SEEK_SET);
-
-	int reg_size;
-	fread(&reg_size, sizeof(int), 1, line_file);
-	fseek(line_file, -1, SEEK_CUR);
-
-	char* bytes_from_reg = malloc(reg_size * sizeof(char));
-	fread(bytes_from_reg, sizeof(char), reg_size, line_file);
-
-	LEntry* reg_entry = LEntryFromBytes(bytes_from_reg);
-	displayLine(reg_entry);
-
-	free(reg_entry);
-	free(bytes_from_reg);
-	closeFile(line_file);
-}
-
-// Insere novos registros em um arquivo e indexa na arvore b lendo do stdin
-void insertLineEntriesBTree(LTable* table,int qty,FILE* bin, BTree* btree_struct){
-	rewind(bin);	// Rewind and mark binary as unstable
-	fwrite("0",sizeof(char),1,bin);
-	fseek(bin,0,SEEK_END);
-
-	table->lines = realloc(table->lines,(table->qty+qty)*sizeof(LEntry));
-	for(int i = 0;i < qty;i++){ // Itera pelas linhas de entrada
-
-	// Lê uma linha e transforma ela em uma entry
-		char* entryString = readline(stdin);
-		cleanString(entryString);
-		LEntry* entry = LEntryFromString(entryString);
-
-		// Se o novo registro não estiver logicamente deletado adicione ele no index
-		if (entry->isPresent == '1') {
-			++table->header->qty; 
-			insert_btree(btree_struct, entry->lineCode, ftell(bin));
-		} else {
-			++table->header->rmvQty;
-		}
-
-		table->header->byteOffset += entry->size;
-
-		char* entryBytes = LEntryAsBytes(entry);
-		fwrite(entryBytes,sizeof(char),entry->size,bin);
-
-		table->lines[i] = *entry;
-		free(entryString);
-		free(entryBytes);
-		free(entry);
-	}
-
-	table->qty += qty;
-	rewind(bin);	// Rewind and mark binary as stable
-	fwrite("1",sizeof(char),1,bin);
-	fwrite(&table->header->byteOffset,sizeof(long),1,bin);
-	fwrite(&table->header->qty,sizeof(int),1,bin);
-	fwrite(&table->header->rmvQty,sizeof(int),1,bin);
+	return;
 }
