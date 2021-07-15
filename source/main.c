@@ -4,6 +4,7 @@
 #include "../includes/utils.h"
 #include "../includes/vehicle.h"
 #include "../includes/line.h"
+#include <stdio.h>
 
 // Função 9 e 10 do trabalho 2  ——— Ler registro do csv, inserir no .bin e inserir na btree
 void create_index(int op,char* bin_name,char* btree_name) {
@@ -201,6 +202,108 @@ void insert_into(int op,char* bin_name,char* btree_name,int quantity) {
 	binarioNaTela(btree_name);
 }
 
+void join_bruteforce(char* vehicle_name,char* line_name) {
+	// 0. Abrindo arquivos utilizados
+	FILE* vehicle_bin = fopen_safe(vehicle_name, "rb");
+	FILE* line_bin = fopen_safe(line_name, "rb");
+
+	// 1. Lendo cabecalho de veiculo E linha, e marcando os dois como instaveis.
+	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
+	vehicle_header->status = '0';
+	header_write(vehicle_name, vehicle_header);
+
+	Bin_header* line_header = header_read(line_bin, LINE_DESCRIPTION_LEN);
+	line_header->status = '0';
+	header_write(line_name, line_header);
+
+	// 1.1 Variavel rastreando se — QUALQUER — par foi feito.
+	// Caso nenhum seja feito, printar "Registro inexistente.\n"
+	char any_code_found = 0;
+	
+	// 2. Iterando sobre cada veiculo em veiculos
+	char removed;
+	while ((fread(&removed, sizeof(char), 1, vehicle_bin)) > 0) {
+		// 2.1 Le tamanho do registro
+		int entry_len;
+		fread(&entry_len, sizeof(int), 1, vehicle_bin);
+
+		// 2.2 Registro logicamente removido: pula para proximo loop
+		if (removed == '0') {
+			fseek(vehicle_bin, entry_len, SEEK_CUR);
+			continue;
+		}
+
+		// 2.3 Aloca memoria para o registro
+		int entry_data_len = sizeof(char) + sizeof(int) + entry_len;
+		char* vehicle_data = malloc(entry_data_len);
+
+		// 2.4 Copia os campos 'removido', 'tamanho do registro' e lê o resto
+		vehicle_data[0] = removed;
+		memcpy(&vehicle_data[1], &entry_len, sizeof(int));
+		fread(&vehicle_data[5], sizeof(char), entry_len, vehicle_bin);
+
+		// 2.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
+		int vehicle_line_code = vehicle_get_line_code(vehicle_data);
+
+		// 3. Iterando sobre cada linha em linhas
+		// Inicia busca pelo "codigo de linha" correspondente em linha.bin
+		while ((fread(&removed, sizeof(char), 1, line_bin)) > 0) {
+			// 3.1 Le tamanho do registro
+			int entry_len;
+			fread(&entry_len, sizeof(int), 1, line_bin);
+
+			// 3.2 Registro logicamente removido: pula para proximo loop
+			if (removed == '0') {
+				fseek(line_bin, entry_len, SEEK_CUR);
+				continue;
+			}
+
+			// 3.3 Aloca memoria para o registro
+			int entry_data_len = sizeof(char) + sizeof(int) + entry_len;
+			char* line_data = malloc(entry_data_len);
+
+			// 3.3 Copia os campos 'removido', 'tamanho do registro' e lê o resto
+			line_data[0] = removed;
+			memcpy(&line_data[1], &entry_len, sizeof(int));
+			fread(&line_data[5], sizeof(char), entry_len, vehicle_bin);
+
+			// 3.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
+			int line_code = line_get_key(line_data);
+
+			// 3.6 Caso seja linha correspondente: printa veiculo -> printa linha
+			// Tambem marcar que pelo menos 1 par foi achado, entao nao printa "Registro inexistente.\n"
+			if (vehicle_line_code == line_code) {
+				// TODO: display needs adjustments, maybe remove the "\n" that are printed
+				// and print them outside the display function.
+				display_vehicle_from_data(vehicle_data);
+				display_line_from_data(line_data);
+				any_code_found = 1;
+
+				free(line_data); // Free no registro linha lido
+				break;
+			}
+
+			free(line_data); // Free no registro linha lido
+		}
+
+		free(vehicle_data); // Free no registro veiculo lido
+	}
+
+	// 4. Caso não haja nenhuma junção
+	if (!any_code_found) {
+		printf("Registro inexistente.\n");
+	}
+
+	// 5. Fechar os arquivos abertos
+	vehicle_header->status = '1';
+	header_write(vehicle_name, vehicle_header);
+	fclose(vehicle_bin);
+	
+	line_header->status = '1';
+	header_write(line_name, line_header);
+	fclose(line_bin);
+}
+
 void trabalho2_menu(char** arguments) {
 	int operation = atoi(arguments[0]);
 	switch (operation) {
@@ -218,6 +321,9 @@ void trabalho2_menu(char** arguments) {
 			insert_into(operation, arguments[1], arguments[2], insert_quantity);
 			break;
 		}
+		case 15:
+			join_bruteforce(arguments[1], arguments[2]);
+			break;
 	}
 }
 
