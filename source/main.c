@@ -202,6 +202,8 @@ void insert_into(int op,char* bin_name,char* btree_name,int quantity) {
 	binarioNaTela(btree_name);
 }
 
+// Funcao 15 do trabalho 3  ——— Iterar sobre veiculos e sobre linhas, printrando
+//                                 registros correspondentes por "codigo de linha".
 void join_bruteforce(char* vehicle_name,char* line_name) {
 	// 0. Abrindo arquivos utilizados
 	FILE* vehicle_bin = fopen_safe(vehicle_name, "rb");
