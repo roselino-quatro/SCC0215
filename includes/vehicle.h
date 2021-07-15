@@ -22,6 +22,11 @@ char* vehicle_from_string(char* entry_string);
 int vehicle_get_key(char* vehicle_data);
 
 /*
+* Gets the vehicle's "line code" field from a binary representation.
+*/
+int vehicle_get_line_code(char* vehicle_data);
+
+/*
 * Display the binary representation is a "text"/human readable format.
 */
 void display_vehicle_from_data(char* vehicle_data);

@@ -83,6 +83,13 @@ int vehicle_get_key(char* vehicle_data) {
 	return prefix_hash;
 }
 
+int vehicle_get_line_code(char* vehicle_data) {
+	int vehicle_line_code;
+	memcpy(&vehicle_line_code, &vehicle_data[24], sizeof(int));
+
+	return vehicle_line_code;
+}
+
 void display_vehicle_from_data(char* vehicle_data) {
 	char* nullField = "campo com valor nulo\0";
 	
