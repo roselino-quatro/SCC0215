@@ -100,6 +100,19 @@ void string_to_csv(char* string){
 	}
 }
 
+FILE* fopen_safe(char* name,char* mode) {
+	// 0. Abrindo e testando validade do arquivo
+	FILE* file = fopen(name, mode);
+	if (file == NULL || fgetc(file) != '1') {
+		printf("Falha no processamento do arquivo.\n");
+		exit(0);
+	}
+
+	// 1. Resetando arquivo para estado utilizado pelo programa
+	rewind(file);
+	return file;
+}
+
 // Função fornecida binarioNaTela
 void binarioNaTela(char *nomeArquivoBinario) { /* Você não precisa entender o código dessa função. */
 
