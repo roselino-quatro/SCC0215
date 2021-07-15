@@ -8,12 +8,7 @@
 // Função 9 e 10 do trabalho 2  ——— Ler registro do csv, inserir no .bin e inserir na btree
 void create_index(int op,char* bin_name,char* btree_name) {
 	// 0. Abrindo arquivos utilizados
-	FILE* bin = fopen(bin_name, "rb");
-	if (bin == NULL || fgetc(bin) != '1') { // Arquivo binario nao existe: sair da funcao
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	}
-	rewind(bin);
+	FILE* bin = fopen_safe(bin_name, "rb");
 	Btree* btree = btree_new(btree_name);
 
 	// 1. Lendo header e escrevendo com status '0'
@@ -103,11 +98,7 @@ void select_where(int op,char* bin_name,char* btree_name,char* key_str) {
 	}
 
 	// 5. Abrir o arquivo binario
-	FILE* bin = fopen(bin_name, "rb");
-	if (bin == NULL) {
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	}
+	FILE* bin = fopen_safe(bin_name, "rb");
 	fseek(bin, offset_in_bin, SEEK_SET);
 
 	// 5. Pegar o registro correspondente, no arquivo binario
@@ -140,9 +131,9 @@ void select_where(int op,char* bin_name,char* btree_name,char* key_str) {
 // Funcao 13 e 14 do traalho 2  ——— Inserir n entradas no .bin e na btree, simultaneamente
 void insert_into(int op,char* bin_name,char* btree_name,int quantity) {
 	// 0. Abrindo os arquivos utilizados
-	FILE* bin = fopen(bin_name, "rb+");    
+	FILE* bin = fopen_safe(bin_name, "rb+");
 	Btree* btree = btree_read_header(btree_name);
-	if (bin == NULL || btree == NULL) { // Algum dos arquivos nao existe: sair da funcao
+	if (btree == NULL) { // Algum dos arquivos nao existe: sair da funcao
 		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
