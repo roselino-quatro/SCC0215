@@ -55,6 +55,13 @@ int line_get_key(char* line_data) {
 	return line_code;
 }
 
+int line_cmp(const void* line1,const void* line2) {
+	int l1_line_code = line_get_key((char*)line1);
+	int l2_line_code = line_get_key((char*)line2);
+
+	return l1_line_code - l2_line_code;
+}
+
 void display_line_from_data(char* line_data) {
 	// 1. Printando codigo da linha
 	int line_code;

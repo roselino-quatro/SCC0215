@@ -21,6 +21,11 @@ char* line_from_string(char* entry_string);
 int line_get_key(char* line_data);
 
 /*
+* qsort() comparator function.
+*/
+int line_cmp(const void* line1,const void* line2);
+
+/*
 * Display the binary representation in a "text"/human readable format.
 */
 void display_line_from_data(char* line_data);

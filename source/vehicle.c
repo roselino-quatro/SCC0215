@@ -1,7 +1,6 @@
 // Gabriel Victor Cardoso Fernandes nUsp 11878296
 // Lourenço de Salles Roselino nUsp 11796805
 #include "../includes/vehicle.h"
-#include <string.h>
 
 // Tamanho, em bytes, dos campos fixos de todo registro do tipo "veiculo"
 #define VEHICLE_FIXED_FIELDS_LEN 36
@@ -88,6 +87,13 @@ int vehicle_get_line_code(char* vehicle_data) {
 	memcpy(&vehicle_line_code, &vehicle_data[24], sizeof(int));
 
 	return vehicle_line_code;
+}
+
+int vehicle_cmp(const void* vehicle1,const void* vehicle2) {
+	int v1_line_code = vehicle_get_line_code((char*)vehicle1);
+	int v2_line_code = vehicle_get_line_code((char*)vehicle2);
+
+	return v1_line_code - v2_line_code;
 }
 
 void display_vehicle_from_data(char* vehicle_data) {

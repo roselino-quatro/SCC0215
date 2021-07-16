@@ -27,6 +27,11 @@ int vehicle_get_key(char* vehicle_data);
 int vehicle_get_line_code(char* vehicle_data);
 
 /*
+* qsort() comparator function
+*/
+int vehicle_cmp(const void* vehicle1,const void* vehicle2);
+
+/*
 * Display the binary representation is a "text"/human readable format.
 */
 void display_vehicle_from_data(char* vehicle_data);

@@ -407,6 +407,100 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	btree_delete(line_btree);
 }
 
+// Funcao 17 e 18 do trabalho 3 ——— Ler todos registros de um arquivo entrada, ordenar os registros
+//                                     em memória, e escrever os registros ordenados em um novo arquivo.
+void sort_table(int op,char* in_name,char* out_name) {
+	// 0. Especificar qual tipo de dado estamos ordenando: veiculo ou linha
+	int (*entry_compare)(const void*,const void*);
+	int header_description_len;
+	if (op == 17) {
+		entry_compare = vehicle_cmp;
+		header_description_len = VEHICLE_DESCRIPTION_LEN;
+	} else {
+		entry_compare = line_cmp;
+		header_description_len = LINE_DESCRIPTION_LEN;
+	}
+
+	// 1. Abrindo arquivos utilizados
+	FILE* bin = fopen_safe(in_name, "rb");
+	Bin_header* bin_header = header_read(bin, header_description_len);
+	
+	// 2. Alocando vetor de registros que vai armazenar os registros do arquivo binario de dados
+	char** binary_entries = malloc((1 + bin_header->nroRegistros) * sizeof(char*));
+	int entries_pos = 0; // Posicao livre atual do vetor de registros
+
+	// 3. Loop carregando registros do arquivo para memória: lê registro -> guarda no vetor de registros
+	char removed;
+	while ((fread(&removed, sizeof(char), 1, bin)) > 0) {
+		// 3.1 Le tamanho do registro
+		int entry_len;
+		fread(&entry_len, sizeof(int), 1, bin);
+
+		// 3.2 Registro logicamente removido: pula para proximo loop
+		if (removed == '0') {
+			fseek(bin, entry_len, SEEK_CUR);
+			continue;
+		}
+
+		// 3.3 Aloca memoria para o registro
+		int entry_data_len = sizeof(char) + sizeof(int) + entry_len;
+		char* entry_data = malloc(entry_data_len);
+
+		// 3.4 Copia os campos 'removido', 'tamanho do registro' e lê o resto
+		entry_data[0] = removed;
+		memcpy(&entry_data[1], &entry_len, sizeof(int));
+		fread(&entry_data[5], sizeof(char), entry_len, bin);
+
+		// 3.5 Insere dados na btree (indexando)
+		binary_entries[entries_pos++] = entry_data;
+	}
+	// Fechando arquivo de entrada
+	fclose(bin);
+
+	// 4. Ordenando vetor de registros
+	qsort(binary_entries, bin_header->nroRegistros, sizeof(char*), entry_compare);
+
+	// 6. Criando arquivo de saida.
+	FILE* bin_out = fopen(out_name, "wb");
+	bin_header->nroRegistros = 0;
+	bin_header->nroRegistrosRemovidos = 0;
+	bin_header->status = '0';
+	printf("Header len: %d\n",header_description_len);
+	bin_header->byteProxReg = header_description_len + 17;
+	header_write(out_name, bin_header);
+
+	fseek(bin_out, header_description_len+17, SEEK_SET);
+	// 5. Escrevendo o vetor de registros, ordenado, no arquivo de saida.
+	for (int i = 0; i < entries_pos; i++) {
+		// 5.1 Lendo tamanho do registro atual
+		char* entry_data = binary_entries[i];
+		int entry_data_len;
+		memcpy(&entry_data_len, &entry_data[1], sizeof(int));
+
+		// 5.2 Escrevendo registro atual no arquivo de saida
+		fwrite(entry_data, sizeof(char)+sizeof(int)+entry_data_len, 1, bin_out);
+
+		// 5.3 Liberando memoria do registro atual
+		free(entry_data);
+
+		// 5.4 Atualizando informacao do cabecalho
+		bin_header->nroRegistros++;
+		bin_header->byteProxReg += sizeof(char)+sizeof(int)+entry_data_len;
+	}
+
+	// 6. Escrevendo cabecalho no arquivo de saida
+	bin_header->status = '1';
+	header_write(out_name, bin_header);
+
+	// 7. Fechando arquivos e liberando memoria
+	header_free(bin_header);
+	free(binary_entries);
+	fclose(bin_out);
+
+	// 8. binarioNaTela no arquivo de saida
+	binarioNaTela(out_name);
+}
+
 void trabalho2_menu(char** arguments) {
 	int operation = atoi(arguments[0]);
 	switch (operation) {
@@ -430,6 +524,9 @@ void trabalho2_menu(char** arguments) {
 		case 16:
 			join_simple(arguments[1], arguments[2], arguments[5]);
 			break;
+		case 17:
+		case 18:
+			sort_table(operation, arguments[1], arguments[2]);
 	}
 }
 
