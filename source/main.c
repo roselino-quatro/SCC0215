@@ -510,6 +510,88 @@ void sort_table(int op,char* in_name,char* out_name) {
 	binarioNaTela(out_name);
 }
 
+// Funcao 19 do trabalho 3 ——— Carregar veiculos e linhas na memoria, depois
+//                                printar matches usando two-pointer approach.
+void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
+	// 0. Carregando registros de veiculo na memória
+	FILE* vehicle_bin = fopen_safe(vehicle_bin_name, "rb");
+	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
+	char** vehicle_entries = binary_load_to_memory(vehicle_bin, vehicle_header);
+	fclose(vehicle_bin);
+
+	// 1. Carregando registros de linha na memória
+	FILE* line_bin = fopen_safe(line_bin_name, "rb");
+	Bin_header* line_header = header_read(line_bin, LINE_DESCRIPTION_LEN);
+	char** line_entries = binary_load_to_memory(line_bin, line_header);
+	fclose(line_bin);
+
+	// 2. Ordenando registros de veiculo e registros de linha
+	qsort(vehicle_entries, vehicle_header->nroRegistros, sizeof(char*), vehicle_cmp);
+	qsort(line_entries   , line_header->nroRegistros   , sizeof(char*), line_cmp);
+
+	// 3. Criando ponteiros de indice para registros de veiculo e registros de linha
+	int vehicle_qty = vehicle_header->nroRegistros;
+	header_free(vehicle_header);
+	int vehicle_pos = 0;
+
+	int line_qty = line_header->nroRegistros;
+	header_free(line_header);
+	int line_pos = 0;
+
+	char any_match_occured = 0;
+	// 4. Loop fazendo o merge
+	while (vehicle_pos < vehicle_qty && line_pos < line_qty) {
+		// 4.1 Pegar o campo "codigo de linha" dos dois registrados apontados
+		char* vehicle_data = vehicle_entries[vehicle_pos];
+		int vehicle_line_code = vehicle_get_line_code(vehicle_data);
+		
+		char* line_data = line_entries[line_pos];
+		int line_code = line_get_key(line_data);
+
+		// 4.2 Comparar o "codigo de linha" dos dois registros apontados
+		if (vehicle_line_code == line_code) {
+			// 5. Merge! Printar o registro veiculo e o registro linha correspondente
+			display_vehicle_from_data(vehicle_data);
+			printf("\n");
+			display_line_from_data(line_data);
+			printf("\n\n");
+			any_match_occured = 1;
+			
+			// 5.1 Liberar memoria dos registros mostrados
+			free(vehicle_data);
+			
+			// 5.2 Andar ponteiro
+			vehicle_pos++;
+		} else if(vehicle_line_code < line_code) {
+			// 6. Liberar memoria do registro veiculo e andar seu ponteiro
+			free(vehicle_data);
+			vehicle_pos++;
+		} else {
+			// 7. Liberar memoria do registro linha e andar seu ponteiro
+			free(line_data);
+			line_pos++;
+		}
+	}
+
+	// 8. Caso nenhum par seja printado, printar "Registro inexistente."
+	if (!any_match_occured) {
+		printf("Registro inexistente.\n");
+	}
+
+	// 9. Terminar de liberar a memoria do vetor de maior tamanho
+	while (vehicle_pos < vehicle_qty) {
+		free(vehicle_entries[vehicle_pos]);
+		vehicle_pos++;
+	}
+	free(vehicle_entries);
+
+	while (line_pos < line_qty) {
+		free(line_entries[line_pos]);
+		line_pos++;
+	}
+	free(line_entries);
+}
+
 void trabalho2_menu(char** arguments) {
 	int operation = atoi(arguments[0]);
 	switch (operation) {
@@ -536,6 +618,9 @@ void trabalho2_menu(char** arguments) {
 		case 17:
 		case 18:
 			sort_table(operation, arguments[1], arguments[2]);
+			break;
+		case 19:
+			merge_tables(arguments[1], arguments[2]);
 			break;
 	}
 }
