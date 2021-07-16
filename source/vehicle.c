@@ -90,8 +90,8 @@ int vehicle_get_line_code(char* vehicle_data) {
 }
 
 int vehicle_cmp(const void* vehicle1,const void* vehicle2) {
-	int v1_line_code = vehicle_get_line_code((char*)vehicle1);
-	int v2_line_code = vehicle_get_line_code((char*)vehicle2);
+	int v1_line_code = vehicle_get_line_code(*((char**)vehicle1));
+	int v2_line_code = vehicle_get_line_code(*((char**)vehicle2));
 
 	return v1_line_code - v2_line_code;
 }
@@ -133,12 +133,12 @@ void display_vehicle_from_data(char* vehicle_data) {
 	char* months[12] = {"janeiro","fevereiro","março","abril","maio","junho",
 						"julho", "agosto","setembro","outubro","novembro","dezembro"};
 	
-	if(vehicle_data[5] != '\0'){
+	if(vehicle_data[10] != '\0'){
 		// Valor de ano está no offset 5
 		int year = atoi(&vehicle_data[10]);
 
 		// Valor de mes esta no offset 10
-		char* month = months[atoi(&vehicle_data[5])-1];
+		char* month = months[atoi(&vehicle_data[15])-1];
 
 		// Valor de dia esta no offset 13
 		char* day_str = strndup(&vehicle_data[18], 2);

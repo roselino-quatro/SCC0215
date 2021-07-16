@@ -56,8 +56,8 @@ int line_get_key(char* line_data) {
 }
 
 int line_cmp(const void* line1,const void* line2) {
-	int l1_line_code = line_get_key((char*)line1);
-	int l2_line_code = line_get_key((char*)line2);
+	int l1_line_code = line_get_key(*((char**)line1));
+	int l2_line_code = line_get_key(*((char**)line2));
 
 	return l1_line_code - l2_line_code;
 }
