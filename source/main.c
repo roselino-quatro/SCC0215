@@ -207,8 +207,12 @@ void insert_into(int op,char* bin_name,char* btree_name,int quantity) {
 //                                 registros correspondentes por "codigo de linha".
 void join_bruteforce(char* vehicle_name,char* line_name) {
 	// 0. Abrindo arquivos utilizados
-	FILE* vehicle_bin = fopen_safe(vehicle_name, "rb");
-	FILE* line_bin = fopen_safe(line_name, "rb");
+	FILE* vehicle_bin = fopen(vehicle_name, "rb");
+	FILE* line_bin = fopen(line_name, "rb");
+	if (vehicle_bin == NULL || line_bin == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
 
 	// 1. Lendo cabecalho de veiculo E linha, e marcando os dois como instaveis.
 	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
@@ -248,6 +252,7 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 		// 2.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
 		int vehicle_line_code = vehicle_get_line_code(vehicle_data);
 
+		fseek(line_bin, LINE_DESCRIPTION_LEN+17, SEEK_SET);
 		// 3. Iterando sobre cada linha em linhas
 		// Inicia busca pelo "codigo de linha" correspondente em linha.bin
 		while ((fread(&removed, sizeof(char), 1, line_bin)) > 0) {
@@ -268,7 +273,7 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 			// 3.3 Copia os campos 'removido', 'tamanho do registro' e lê o resto
 			line_data[0] = removed;
 			memcpy(&line_data[1], &entry_len, sizeof(int));
-			fread(&line_data[5], sizeof(char), entry_len, vehicle_bin);
+			fread(&line_data[5], sizeof(char), entry_len, line_bin);
 
 			// 3.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
 			int line_code = line_get_key(line_data);
@@ -276,10 +281,10 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 			// 3.6 Caso seja linha correspondente: printa veiculo -> printa linha
 			// Tambem marcar que pelo menos 1 par foi achado, entao nao printa "Registro inexistente.\n"
 			if (vehicle_line_code == line_code) {
-				// TODO: display needs adjustments, maybe remove the "\n" that are printed
-				// and print them outside the display function.
 				display_vehicle_from_data(vehicle_data);
+				printf("\n");
 				display_line_from_data(line_data);
+				printf("\n\n");
 				any_code_found = 1;
 
 				free(line_data); // Free no registro linha lido
