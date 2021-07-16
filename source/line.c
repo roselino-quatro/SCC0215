@@ -57,17 +57,16 @@ int line_get_key(char* line_data) {
 
 void display_line_from_data(char* line_data) {
 	// 1. Printando codigo da linha
-	// FIXME: por algum motivo nao tá no PDF???
 	int line_code;
-	memcpy(&line_code, &line_data[0], sizeof(int));
+	memcpy(&line_code, &line_data[5], sizeof(int));
 	printf("Codigo da linha: %d\n",line_code);
 
 	// 2. Printando nome da linha
 	int name_len;
-	memcpy(&name_len, &line_data[5], sizeof(int));
+	memcpy(&name_len, &line_data[10], sizeof(int));
 	
 	if (name_len > 0) {
-		char* name = strndup(&line_data[9], name_len);
+		char* name = strndup(&line_data[14], name_len);
 		printf("Nome da linha: %s\n",name);
 		free(name);
 	} else {
@@ -76,25 +75,25 @@ void display_line_from_data(char* line_data) {
 
 	// 3. Printando cor da linha
 	int color_len;
-	memcpy(&color_len, &line_data[9+name_len], sizeof(int));
+	memcpy(&color_len, &line_data[14+name_len], sizeof(int));
 
 	if (color_len > 0) {
-		char* color = strndup(&line_data[9+name_len+4], color_len);
+		char* color = strndup(&line_data[14+name_len+4], color_len);
 		printf("Cor que descreve a linha: %s\n",color);
 		free(color);
 	} else {
 		printf("Nome da linha: campo com valor nulo\n");
 	}
 
-	char aceita_cartao = line_data[4];
+	char aceita_cartao = line_data[9];
 	if(aceita_cartao == 'S'){
-		printf("Aceita cartao: PAGAMENTO SOMENTE COM CARTAO SEM PRESENCA DE COBRADOR\n\n");
+		printf("Aceita cartao: PAGAMENTO SOMENTE COM CARTAO SEM PRESENCA DE COBRADOR");
 	} else if(aceita_cartao == 'N'){
-		printf("Aceita cartao: PAGAMENTO EM CARTAO E DINHEIRO\n\n");
+		printf("Aceita cartao: PAGAMENTO EM CARTAO E DINHEIRO");
 	} else if(aceita_cartao == 'F'){
-		printf("Aceita cartao: PAGAMENTO EM CARTAO SOMENTE NO FINAL DE SEMANA\n\n");
+		printf("Aceita cartao: PAGAMENTO EM CARTAO SOMENTE NO FINAL DE SEMANA");
 	} else{
-		printf("Aceita cartao: campo com valor nulo\n\n");
+		printf("Aceita cartao: campo com valor nulo");
 	}
 	return;
 }

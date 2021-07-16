@@ -95,15 +95,15 @@ void display_vehicle_from_data(char* vehicle_data) {
 	
 	// 0. Percorrendo os dados binarios e printando seus campos.
 	// Printando prefixo do veiculo -> Nunca é nulo!
-	printf("Prefixo do veiculo: %.5s\n",&vehicle_data[0]);
+	printf("Prefixo do veiculo: %.5s\n",&vehicle_data[5]);
 
 	// Lendo tamanho do campo "modelo"
 	int model_len;
-	memcpy(&model_len, &vehicle_data[23], sizeof(int));
+	memcpy(&model_len, &vehicle_data[28], sizeof(int));
 	
 	// Printando modelo do veiculo
 	if (model_len > 0) {
-		char* vehicle_model = strndup(&vehicle_data[27], model_len);
+		char* vehicle_model = strndup(&vehicle_data[32], model_len);
 		printf("Modelo do veiculo: %s\n",vehicle_model);
 		free(vehicle_model);
 	} else {
@@ -112,11 +112,11 @@ void display_vehicle_from_data(char* vehicle_data) {
 
 	// Lendo tamanho do campo "categoria"
 	int category_len;
-	memcpy(&category_len, &vehicle_data[27+model_len], sizeof(int));
+	memcpy(&category_len, &vehicle_data[32+model_len], sizeof(int));
 
 	// Printando categoria do veiculo
 	if (category_len > 0) {
-		char* vehicle_category = strndup(&vehicle_data[27+model_len+4], category_len);
+		char* vehicle_category = strndup(&vehicle_data[32+model_len+4], category_len);
 		printf("Categoria do veiculo: %s\n",vehicle_category);
 		free(vehicle_category);
 	} else {
@@ -129,13 +129,13 @@ void display_vehicle_from_data(char* vehicle_data) {
 	
 	if(vehicle_data[5] != '\0'){
 		// Valor de ano está no offset 5
-		int year = atoi(&vehicle_data[5]);
+		int year = atoi(&vehicle_data[10]);
 
 		// Valor de mes esta no offset 10
-		char* month = months[atoi(&vehicle_data[10])-1];
+		char* month = months[atoi(&vehicle_data[5])-1];
 
 		// Valor de dia esta no offset 13
-		char* day_str = strndup(&vehicle_data[13], 2);
+		char* day_str = strndup(&vehicle_data[18], 2);
 		int day = atoi(day_str);
 		free(day_str);
 
@@ -146,12 +146,12 @@ void display_vehicle_from_data(char* vehicle_data) {
 
 	// Lendo campo "quantidade de lugares"
 	int seat_quantity;
-	memcpy(&seat_quantity, &vehicle_data[15], sizeof(int));
+	memcpy(&seat_quantity, &vehicle_data[20], sizeof(int));
 
 	// Printando campo "quantidade de lugares"
 	if (seat_quantity != -1) {
-		printf("Quantidade de lugares sentados disponiveis: %d\n\n",seat_quantity);
+		printf("Quantidade de lugares sentados disponiveis: %d",seat_quantity);
 	} else {
-		printf("Quantidade de lugares sentados disponiveis: %s\n\n",nullField);
+		printf("Quantidade de lugares sentados disponiveis: %s",nullField);
 	}
 }
