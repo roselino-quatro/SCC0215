@@ -317,13 +317,12 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	// 0. Abrindo arquivos utilizados
 	Btree* line_btree = btree_read_header(line_btree_name);
-	if (line_btree == NULL) {
+	FILE* vehicle_bin = fopen(vehicle_name, "rb");
+	FILE* line_bin = fopen(line_name, "rb");
+	if (line_btree == NULL || vehicle_bin == NULL || line_bin == NULL) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
-
-	FILE* vehicle_bin = fopen_safe(vehicle_name, "rb");
-	FILE* line_bin = fopen_safe(line_name, "rb");
 
 	// 1. Lendo cabecalho de veiculo E linha, e marcando os dois como instaveis.
 	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
@@ -380,13 +379,16 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 				fread(&entry_size, sizeof(int), 1, line_bin);
 
 				// 4.1 Ler dados de registro no arquivo binario, e fechar o arquivo
-				char line_data[entry_size];
-				fread(line_data, sizeof(char), entry_size, line_bin);
+				char line_data[5+entry_size];
+				line_data[0] = removed;
+				memcpy(&line_data[1], &entry_len, sizeof(int));
+				fread(&line_data[5], sizeof(char), entry_size, line_bin);
 
 				// 4.2 Printar registro veiculo e registro linha correspondentes
-				// TODO: fix display (binary data missing fields "removido" e "tamanho registro")
 				display_vehicle_from_data(vehicle_data);
+				printf("\n");
 				display_line_from_data(line_data);
+				printf("\n\n");
 				any_code_found = 1;
 			}
 		}
@@ -399,13 +401,15 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	}
 
 	// 6. Fechar os arquivos abertos
+	fclose(vehicle_bin);
 	vehicle_header->status = '1';
 	header_write(vehicle_name, vehicle_header);
-	fclose(vehicle_bin);
+	header_free(vehicle_header);
 	
+	fclose(line_bin);
 	line_header->status = '1';
 	header_write(line_name, line_header);
-	fclose(line_bin);
+	header_free(line_header);
 
 	line_btree->status = '1';
 	btree_write_header(line_btree);
