@@ -1,5 +1,5 @@
 #Name of end binary
-PROGNAME = arquivost2
+PROGNAME = arquivost3
 
 #Compiler and Linker flags and options
 CC := gcc
