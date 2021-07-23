@@ -50,7 +50,7 @@ clean:
 
 zip:
 	@echo "Zipping source and make with optimal compression..."
-	@zip -9 -rq ${PROGNAME}.zip ${SRC_F} makefile
+	@zip -9 -rq ${PROGNAME}.zip ${SRC_F} ${INCLUDE_F} makefile
 	@echo "Done!"
 
 test: ${TEST_F} ${TEST_CASES}
