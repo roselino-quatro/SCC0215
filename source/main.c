@@ -17,6 +17,12 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
+	if (fgetc(vehicle_bin) == '0' || fgetc(line_bin) == '0') {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+	rewind(vehicle_bin);
+	rewind(line_bin);
 
 	// 1. Lendo cabecalho de veiculo E linha, e marcando os dois como instaveis.
 	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
@@ -127,6 +133,12 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
+	if (fgetc(vehicle_bin) == '0' || fgetc(line_bin) == '0') {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+	rewind(vehicle_bin);
+	rewind(line_bin);
 
 	// 1. Lendo cabecalho de veiculo E linha, e marcando os dois como instaveis.
 	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
