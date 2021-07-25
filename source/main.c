@@ -318,7 +318,7 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 	free(line_entries);
 }
 
-void trabalho2_menu(char** arguments) {
+void trabalho3_menu(char** arguments) {
 	int operation = atoi(arguments[0]);
 	switch (operation) {
 		case 15:
@@ -345,7 +345,7 @@ int main(){
 	free(operation);
 
 	// 2. Chama o menu e realiza a operacao selecionada
-	trabalho2_menu(arguments);
+	trabalho3_menu(arguments);
 
 	// 3. Limpa a memoria do menu e sai do programa
 	arguments_free(arguments);
