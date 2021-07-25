@@ -38,19 +38,21 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
-
+	
 	// 1. Variavel rastreando se — QUALQUER — par foi feito.
 	// Caso nenhum seja feito, printar "Registro inexistente.\n"
 	char any_code_found = 0;
+
+	// 1.1 Pulando header do arquivo veiculo
+	fseek(vehicle_bin, VEHICLE_DESCRIPTION_LEN+17, SEEK_SET);
 	
 	// 2. Iterando sobre cada veiculo em veiculos
-	fseek(vehicle_bin, VEHICLE_DESCRIPTION_LEN+17, SEEK_SET);
 	char removed;
 	while ((fread(&removed, sizeof(char), 1, vehicle_bin)) > 0) {
 		char* vehicle = read_entry(removed, vehicle_bin);
 		if (vehicle == NULL) continue;
 
-		// 2.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
+		// 2.1 Pega, em veiculo, campo que vai ser comparado — codigo de linha
 		int vehicle_line_code = vehicle_get_line_code(vehicle);
 
 		fseek(line_bin, LINE_DESCRIPTION_LEN+17, SEEK_SET);
@@ -60,24 +62,24 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 			char* line = read_entry(removed, line_bin);
 			if (line == NULL) continue;
 
-			// 3.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
+			// 3.1 Pega, em veiculo, campo que vai ser comparado — codigo de linha
 			int line_code = line_get_key(line);
 
-			// 3.6 Caso seja linha correspondente: printa veiculo -> printa linha
+			// 3.2 Caso seja linha correspondente: printa veiculo -> printa linha
 			// Tambem marcar que pelo menos 1 par foi achado, entao nao printa "Registro inexistente.\n"
 			if (vehicle_line_code == line_code) {
 				display_vehicle_from_data(vehicle);
 				display_line_from_data(line);
 				any_code_found = 1;
 
-				free(line); // Free no registro linha lido
+				free(line);
 				break;
 			}
 
-			free(line); // Free no registro linha lido
+			free(line);
 		}
 
-		free(vehicle); // Free no registro veiculo lido
+		free(vehicle);
 	}
 
 	// 4. Caso não haja nenhuma junção
@@ -103,13 +105,14 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 		return;
 	}
 
-	// 1.1 Variavel rastreando se — QUALQUER — par foi feito.
+	// 1. Variavel rastreando se — QUALQUER — par foi feito.
 	// Caso nenhum seja feito, printar "Registro inexistente.\n"
 	char any_code_found = 0;
 	
-	// 2. Iterando sobre cada veiculo em veiculos
+	// 1.1 Pulando header do veiculo
 	fseek(vehicle_bin, VEHICLE_DESCRIPTION_LEN+17, SEEK_SET);
 
+	// 2. Iterando sobre cada veiculo em veiculos
 	char removed;
 	while ((fread(&removed, sizeof(char), 1, vehicle_bin)) > 0) {
 		char* vehicle = read_entry(removed, vehicle_bin);
@@ -121,7 +124,7 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 		// 2. Procurar pela key no arquivo de indice (btree)
 		long line_offset = search_btree(line_btree, vehicle_line_code);
 
-		// 3. Se a chave foi achada
+		// 3. Se a chave foi achada, pular pra posicao do registro
 		if (line_offset >= 0) {
 			fseek(line_bin, line_offset, SEEK_SET);
 
@@ -129,18 +132,16 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 			char removed;
 			fread(&removed, sizeof(char), 1, line_bin);
 
-			// 4. Se o registro estiver presente
-			if (removed == '1') {
-				// 4.1 Ler dados de registro no arquivo binario, e fechar o arquivo
-				char* line = read_entry(removed, line_bin);
+			char* line = read_entry(removed, line_bin);
+			if (line == NULL) continue;
 
-				// 4.2 Printar registro veiculo e registro linha correspondentes
-				display_vehicle_from_data(vehicle);
-				display_line_from_data(line);
-				any_code_found = 1;
 
-				free(line);
-			}
+			// 3.2 Printar registro veiculo e registro linha correspondentes
+			display_vehicle_from_data(vehicle);
+			display_line_from_data(line);
+			any_code_found = 1;
+
+			free(line);
 		}
 		free(vehicle); // Free no registro veiculo lido
 	}
@@ -215,7 +216,9 @@ void sort_table(int op,char* in_name,char* out_name) {
 	bin_header->byteProxReg = header_description_len + 17;
 	header_write(out_name, bin_header);
 
+	// 4.1 Pulando header no arquivo de saida
 	fseek(bin_out, header_description_len+17, SEEK_SET);
+	
 	// 5. Escrevendo o vetor de registros, ordenado, no arquivo de saida.
 	for (int i = 0; i < entry_qty; i++) {
 		// 5.1 Lendo tamanho do registro atual
@@ -247,10 +250,11 @@ void sort_table(int op,char* in_name,char* out_name) {
 // Funcao 19 do trabalho 3 ——— Carregar veiculos e linhas na memoria, depois
 //                                printar matches usando two-pointer approach.
 void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
+	// 0. Criando arquivos intermediarios, ordenados, que vao ser utilizados
 	sort_table(17, vehicle_bin_name, "veiculo_merge.bin");
 	sort_table(18, line_bin_name, "line_merge.bin");
 
-	// 0. Carregando registros de veiculo na memória
+	// 1. Carregando registros de veiculo na memória
 	FILE* vehicle_bin = fopen_valid("veiculo_merge.bin", "rb");
 	if (vehicle_bin == NULL) return;
 
@@ -258,7 +262,7 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 	char** vehicle_entries = binary_load_to_memory(vehicle_bin, vehicle_header);
 	fclose(vehicle_bin);
 
-	// 1. Carregando registros de linha na memória
+	// 2. Carregando registros de linha na memória
 	FILE* line_bin = fopen_valid("line_merge.bin", "rb");
 	if (line_bin == NULL) return;
 	
