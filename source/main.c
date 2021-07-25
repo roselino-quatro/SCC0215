@@ -252,10 +252,7 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 
 	// 0. Carregando registros de veiculo na memória
 	FILE* vehicle_bin = fopen_valid("veiculo_merge.bin", "rb");
-	if (vehicle_bin == NULL) {
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	} 
+	if (vehicle_bin == NULL) return;
 
 	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
 	char** vehicle_entries = binary_load_to_memory(vehicle_bin, vehicle_header);
@@ -263,10 +260,7 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 
 	// 1. Carregando registros de linha na memória
 	FILE* line_bin = fopen_valid("line_merge.bin", "rb");
-	if (line_bin == NULL) {
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	} 
+	if (line_bin == NULL) return;
 	
 	Bin_header* line_header = header_read(line_bin, LINE_DESCRIPTION_LEN);
 	char** line_entries = binary_load_to_memory(line_bin, line_header);
