@@ -4,7 +4,7 @@
 #ifndef VEHICLE_HEADER_
 #define VEHICLE_HEADER_
 
-#include "../includes/binary_header.h" // Re-exportar header binario e add funcoes para dados binario de veiculo
+#include "../includes/binary_file.h" // Re-exportar header binario e add funcoes para dados binario de veiculo
 #include "../includes/utils.h" // Usa funcao convertePrefixo
 
 #define VEHICLE_DESCRIPTION_LEN 158

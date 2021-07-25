@@ -4,7 +4,7 @@
 #ifndef LINE_HEADER_
 #define LINE_HEADER_
 
-#include "../includes/binary_header.h"
+#include "../includes/binary_file.h"
 
 #define LINE_DESCRIPTION_LEN 65
 

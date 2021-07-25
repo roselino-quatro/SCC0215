@@ -20,4 +20,8 @@ void header_free(Bin_header* header);
 
 void header_write(char* bin_name, Bin_header* header);
 
+char* read_entry(char is_removed, FILE* bin);
+
+char** binary_load_to_memory(FILE* bin,Bin_header* bin_header);
+
 #endif

@@ -5,28 +5,6 @@
 #include "../includes/vehicle.h"
 #include "../includes/line.h"
 
-char* read_entry(char is_removed, FILE* bin) {
-	// 1. Le tamanho do registro
-	int entry_len;
-	fread(&entry_len, sizeof(int), 1, bin);
-
-	// 2. Registro logicamente removido: retorna NULL
-	if (is_removed == '0') {
-		fseek(bin, entry_len, SEEK_CUR);
-		return NULL;
-	}
-
-	// 3 Aloca memoria para o registro
-	char* entry = malloc(entry_len + sizeof(char) + sizeof(int));
-
-	// 4 Copia os campos 'removido', 'tamanho do registro' e lê o resto
-	entry[0] = is_removed;
-	memcpy(&entry[1], &entry_len, sizeof(int));
-	fread(&entry[5], sizeof(char), entry_len, bin);
-
-	return entry;
-}
-
 // Funcao 15 do trabalho 3  ——— Iterar sobre veiculos e sobre linhas, printrando
 //                                 registros correspondentes por "codigo de linha".
 void join_bruteforce(char* vehicle_name,char* line_name) {
@@ -155,26 +133,6 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	fclose(vehicle_bin);	
 	fclose(line_bin);
 	btree_delete(line_btree);
-}
-
-// Lê um arquivo binario de dados, e retorna um vetor de todos registros
-// logicamente presentes no arquivo
-char** binary_load_to_memory(FILE* bin,Bin_header* bin_header) {
-	// 0. Alocando vetor de registros que vai armazenar os registros do arquivo binario de dados
-	char** binary_entries = malloc((bin_header->nroRegistros) * sizeof(char*));
-	int entries_pos = 0; // Posicao livre atual do vetor de registros
-
-	fseek(bin, bin_header->descreve_len+17, SEEK_SET);
-	// 1. Loop carregando registros do arquivo para memória: lê registro -> guarda no vetor de registros
-	char removed;
-	while ((fread(&removed, sizeof(char), 1, bin)) > 0) {
-		char* entry = read_entry(removed, bin);
-		if (entry == NULL) continue;
-
-		binary_entries[entries_pos++] = entry;
-	}
-
-	return binary_entries;
 }
 
 // Funcao 17 e 18 do trabalho 3 ——— Ler todos registros de um arquivo entrada, ordenar os registros
