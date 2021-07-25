@@ -4,15 +4,13 @@
 #include "../includes/utils.h"
 #include "../includes/vehicle.h"
 #include "../includes/line.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 char* read_entry(char is_removed, FILE* bin) {
-	// 1 Le tamanho do registro
+	// 1. Le tamanho do registro
 	int entry_len;
 	fread(&entry_len, sizeof(int), 1, bin);
 
-	// 2 Registro logicamente removido: retorna NULL
+	// 2. Registro logicamente removido: retorna NULL
 	if (is_removed == '0') {
 		fseek(bin, entry_len, SEEK_CUR);
 		return NULL;
@@ -21,7 +19,7 @@ char* read_entry(char is_removed, FILE* bin) {
 	// 3 Aloca memoria para o registro
 	char* entry = malloc(entry_len + sizeof(char) + sizeof(int));
 
-	// 3 Copia os campos 'removido', 'tamanho do registro' e lê o resto
+	// 4 Copia os campos 'removido', 'tamanho do registro' e lê o resto
 	entry[0] = is_removed;
 	memcpy(&entry[1], &entry_len, sizeof(int));
 	fread(&entry[5], sizeof(char), entry_len, bin);
@@ -32,12 +30,16 @@ char* read_entry(char is_removed, FILE* bin) {
 // Funcao 15 do trabalho 3  ——— Iterar sobre veiculos e sobre linhas, printrando
 //                                 registros correspondentes por "codigo de linha".
 void join_bruteforce(char* vehicle_name,char* line_name) {
-	// 0. Abrindo arquivos utilizados
+	// 0. Abrindo e validando arquivos utilizados
 	FILE* vehicle_bin = fopen_valid(vehicle_name, "rb");
 	FILE* line_bin = fopen_valid(line_name, "rb");
-	if (vehicle_bin == NULL || line_bin == NULL) return;
 
-	// 1.1 Variavel rastreando se — QUALQUER — par foi feito.
+	if (vehicle_bin == NULL || line_bin == NULL){
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+
+	// 1. Variavel rastreando se — QUALQUER — par foi feito.
 	// Caso nenhum seja feito, printar "Registro inexistente.\n"
 	char any_code_found = 0;
 	
@@ -96,6 +98,7 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	FILE* line_bin = fopen_valid(line_name, "rb");
 
 	if (line_btree == NULL || vehicle_bin == NULL || line_bin == NULL) {
+		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
 
@@ -186,7 +189,10 @@ void sort_table(int op,char* in_name,char* out_name) {
 
 	// 1. Carregando registros do arquivo para memória
 	FILE* bin = fopen_valid(in_name, "rb");
-	if (bin == NULL) return;
+	if (bin == NULL){
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	}
 
 	Bin_header* bin_header = header_read(bin, header_description_len);
 	char** binary_entries = binary_load_to_memory(bin, bin_header);
@@ -243,7 +249,10 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 
 	// 0. Carregando registros de veiculo na memória
 	FILE* vehicle_bin = fopen_valid("veiculo_merge.bin", "rb");
-	if (vehicle_bin == NULL) return;
+	if (vehicle_bin == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	} 
 
 	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
 	char** vehicle_entries = binary_load_to_memory(vehicle_bin, vehicle_header);
@@ -251,7 +260,10 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 
 	// 1. Carregando registros de linha na memória
 	FILE* line_bin = fopen_valid("line_merge.bin", "rb");
-	if (line_bin == NULL) return;
+	if (line_bin == NULL) {
+		printf("Falha no processamento do arquivo.\n");
+		return;
+	} 
 	
 	Bin_header* line_header = header_read(line_bin, LINE_DESCRIPTION_LEN);
 	char** line_entries = binary_load_to_memory(line_bin, line_header);
@@ -330,7 +342,13 @@ void trabalho3_menu(char** arguments) {
 		case 17:
 		case 18:
 			sort_table(operation, arguments[1], arguments[2]);
-			binarioNaTela(arguments[2]);
+
+			FILE* sorted_table = fopen_valid(arguments[2], "rb");
+			if (sorted_table) {
+				binarioNaTela(arguments[2]);
+				fclose(sorted_table);
+			}
+			
 			break;
 		case 19:
 			merge_tables(arguments[1], arguments[2]);
