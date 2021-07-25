@@ -65,9 +65,7 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 			// Tambem marcar que pelo menos 1 par foi achado, entao nao printa "Registro inexistente.\n"
 			if (vehicle_line_code == line_code) {
 				display_vehicle_from_data(vehicle);
-				printf("\n");
 				display_line_from_data(line);
-				printf("\n\n");
 				any_code_found = 1;
 
 				free(line); // Free no registro linha lido
@@ -133,9 +131,7 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 
 				// 4.2 Printar registro veiculo e registro linha correspondentes
 				display_vehicle_from_data(vehicle);
-				printf("\n");
 				display_line_from_data(line);
-				printf("\n\n");
 				any_code_found = 1;
 
 				free(line);
@@ -289,9 +285,7 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 		if (vehicle_line_code == line_code) {
 			// 5. Merge! Printar o registro veiculo e o registro linha correspondente
 			display_vehicle_from_data(vehicle);
-			printf("\n");
 			display_line_from_data(line);
-			printf("\n\n");
 			any_match_occured = 1;
 			
 			// 5.1 Liberar memoria dos registros mostrados

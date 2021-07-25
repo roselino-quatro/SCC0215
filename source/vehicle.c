@@ -156,8 +156,8 @@ void display_vehicle_from_data(char* vehicle_data) {
 
 	// Printando campo "quantidade de lugares"
 	if (seat_quantity != -1) {
-		printf("Quantidade de lugares sentados disponiveis: %d",seat_quantity);
+		printf("Quantidade de lugares sentados disponiveis: %d\n",seat_quantity);
 	} else {
-		printf("Quantidade de lugares sentados disponiveis: %s",nullField);
+		printf("Quantidade de lugares sentados disponiveis: %s\n",nullField);
 	}
 }

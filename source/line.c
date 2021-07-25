@@ -94,13 +94,13 @@ void display_line_from_data(char* line_data) {
 
 	char aceita_cartao = line_data[9];
 	if(aceita_cartao == 'S'){
-		printf("Aceita cartao: PAGAMENTO SOMENTE COM CARTAO SEM PRESENCA DE COBRADOR");
+		printf("Aceita cartao: PAGAMENTO SOMENTE COM CARTAO SEM PRESENCA DE COBRADOR\n\n");
 	} else if(aceita_cartao == 'N'){
-		printf("Aceita cartao: PAGAMENTO EM CARTAO E DINHEIRO");
+		printf("Aceita cartao: PAGAMENTO EM CARTAO E DINHEIRO\n\n");
 	} else if(aceita_cartao == 'F'){
-		printf("Aceita cartao: PAGAMENTO EM CARTAO SOMENTE NO FINAL DE SEMANA");
+		printf("Aceita cartao: PAGAMENTO EM CARTAO SOMENTE NO FINAL DE SEMANA\n\n");
 	} else{
-		printf("Aceita cartao: campo com valor nulo");
+		printf("Aceita cartao: campo com valor nulo\n\n");
 	}
 	return;
 }
