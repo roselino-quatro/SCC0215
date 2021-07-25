@@ -44,6 +44,7 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 	char any_code_found = 0;
 	
 	// 2. Iterando sobre cada veiculo em veiculos
+	fseek(vehicle_bin, VEHICLE_DESCRIPTION_LEN+17, SEEK_SET);
 	char removed;
 	while ((fread(&removed, sizeof(char), 1, vehicle_bin)) > 0) {
 		char* vehicle = read_entry(removed, vehicle_bin);
@@ -107,6 +108,8 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	char any_code_found = 0;
 	
 	// 2. Iterando sobre cada veiculo em veiculos
+	fseek(vehicle_bin, VEHICLE_DESCRIPTION_LEN+17, SEEK_SET);
+
 	char removed;
 	while ((fread(&removed, sizeof(char), 1, vehicle_bin)) > 0) {
 		char* vehicle = read_entry(removed, vehicle_bin);
