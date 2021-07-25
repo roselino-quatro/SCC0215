@@ -7,6 +7,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+char* read_entry(char is_removed, FILE* bin) {
+	// 1 Le tamanho do registro
+	int entry_len;
+	fread(&entry_len, sizeof(int), 1, bin);
+
+	// 2 Registro logicamente removido: retorna NULL
+	if (is_removed == '0') {
+		fseek(bin, entry_len, SEEK_CUR);
+		return NULL;
+	}
+
+	// 3 Aloca memoria para o registro
+	entry_len += sizeof(char) + sizeof(int);
+	char* entry = malloc(entry_len);
+
+	// 3 Copia os campos 'removido', 'tamanho do registro' e lê o resto
+	entry[0] = is_removed;
+	memcpy(&entry[1], &entry_len, sizeof(int));
+	fread(&entry[5], sizeof(char), entry_len, bin);
+
+	return entry;
+}
+
 // Funcao 15 do trabalho 3  ——— Iterar sobre veiculos e sobre linhas, printrando
 //                                 registros correspondentes por "codigo de linha".
 void join_bruteforce(char* vehicle_name,char* line_name) {
@@ -15,18 +38,6 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 	FILE* line_bin = fopen_valid(line_name, "rb");
 	if (vehicle_bin == NULL || line_bin == NULL) return;
 
-	rewind(vehicle_bin);
-	rewind(line_bin);
-
-	// 1. Lendo cabecalho de veiculo E linha, e marcando os dois como instaveis.
-	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
-	vehicle_header->status = '0';
-	header_write(vehicle_name, vehicle_header);
-
-	Bin_header* line_header = header_read(line_bin, LINE_DESCRIPTION_LEN);
-	line_header->status = '0';
-	header_write(line_name, line_header);
-
 	// 1.1 Variavel rastreando se — QUALQUER — par foi feito.
 	// Caso nenhum seja feito, printar "Registro inexistente.\n"
 	char any_code_found = 0;
@@ -34,71 +45,39 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 	// 2. Iterando sobre cada veiculo em veiculos
 	char removed;
 	while ((fread(&removed, sizeof(char), 1, vehicle_bin)) > 0) {
-		// 2.1 Le tamanho do registro
-		int entry_len;
-		fread(&entry_len, sizeof(int), 1, vehicle_bin);
-
-		// 2.2 Registro logicamente removido: pula para proximo loop
-		if (removed == '0') {
-			fseek(vehicle_bin, entry_len, SEEK_CUR);
-			continue;
-		}
-
-		// 2.3 Aloca memoria para o registro
-		int entry_data_len = sizeof(char) + sizeof(int) + entry_len;
-		char* vehicle_data = malloc(entry_data_len);
-
-		// 2.4 Copia os campos 'removido', 'tamanho do registro' e lê o resto
-		vehicle_data[0] = removed;
-		memcpy(&vehicle_data[1], &entry_len, sizeof(int));
-		fread(&vehicle_data[5], sizeof(char), entry_len, vehicle_bin);
+		char* vehicle = read_entry(removed, vehicle_bin);
+		if (vehicle == NULL) continue;
 
 		// 2.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
-		int vehicle_line_code = vehicle_get_line_code(vehicle_data);
+		int vehicle_line_code = vehicle_get_line_code(vehicle);
 
 		fseek(line_bin, LINE_DESCRIPTION_LEN+17, SEEK_SET);
 		// 3. Iterando sobre cada linha em linhas
 		// Inicia busca pelo "codigo de linha" correspondente em linha.bin
 		while ((fread(&removed, sizeof(char), 1, line_bin)) > 0) {
-			// 3.1 Le tamanho do registro
-			int entry_len;
-			fread(&entry_len, sizeof(int), 1, line_bin);
-
-			// 3.2 Registro logicamente removido: pula para proximo loop
-			if (removed == '0') {
-				fseek(line_bin, entry_len, SEEK_CUR);
-				continue;
-			}
-
-			// 3.3 Aloca memoria para o registro
-			int entry_data_len = sizeof(char) + sizeof(int) + entry_len;
-			char* line_data = malloc(entry_data_len);
-
-			// 3.3 Copia os campos 'removido', 'tamanho do registro' e lê o resto
-			line_data[0] = removed;
-			memcpy(&line_data[1], &entry_len, sizeof(int));
-			fread(&line_data[5], sizeof(char), entry_len, line_bin);
+			char* line = read_entry(removed, line_bin);
+			if (line == NULL) continue;
 
 			// 3.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
-			int line_code = line_get_key(line_data);
+			int line_code = line_get_key(line);
 
 			// 3.6 Caso seja linha correspondente: printa veiculo -> printa linha
 			// Tambem marcar que pelo menos 1 par foi achado, entao nao printa "Registro inexistente.\n"
 			if (vehicle_line_code == line_code) {
-				display_vehicle_from_data(vehicle_data);
+				display_vehicle_from_data(vehicle);
 				printf("\n");
-				display_line_from_data(line_data);
+				display_line_from_data(line);
 				printf("\n\n");
 				any_code_found = 1;
 
-				free(line_data); // Free no registro linha lido
+				free(line); // Free no registro linha lido
 				break;
 			}
 
-			free(line_data); // Free no registro linha lido
+			free(line); // Free no registro linha lido
 		}
 
-		free(vehicle_data); // Free no registro veiculo lido
+		free(vehicle); // Free no registro veiculo lido
 	}
 
 	// 4. Caso não haja nenhuma junção
@@ -107,12 +86,7 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 	}
 
 	// 5. Fechar os arquivos abertos
-	vehicle_header->status = '1';
-	header_write(vehicle_name, vehicle_header);
 	fclose(vehicle_bin);
-	
-	line_header->status = '1';
-	header_write(line_name, line_header);
 	fclose(line_bin);
 }
 
@@ -128,18 +102,6 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 		return;
 	}
 
-	rewind(vehicle_bin);
-	rewind(line_bin);
-
-	// 1. Lendo cabecalho de veiculo E linha, e marcando os dois como instaveis.
-	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
-	vehicle_header->status = '0';
-	header_write(vehicle_name, vehicle_header);
-
-	Bin_header* line_header = header_read(line_bin, LINE_DESCRIPTION_LEN);
-	line_header->status = '0';
-	header_write(line_name, line_header);
-
 	// 1.1 Variavel rastreando se — QUALQUER — par foi feito.
 	// Caso nenhum seja feito, printar "Registro inexistente.\n"
 	char any_code_found = 0;
@@ -147,27 +109,11 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	// 2. Iterando sobre cada veiculo em veiculos
 	char removed;
 	while ((fread(&removed, sizeof(char), 1, vehicle_bin)) > 0) {
-		// 2.1 Le tamanho do registro
-		int entry_len;
-		fread(&entry_len, sizeof(int), 1, vehicle_bin);
-
-		// 2.2 Registro logicamente removido: pula para proximo loop
-		if (removed == '0') {
-			fseek(vehicle_bin, entry_len, SEEK_CUR);
-			continue;
-		}
-
-		// 2.3 Aloca memoria para o registro do veiculo
-		int entry_data_len = sizeof(char) + sizeof(int) + entry_len;
-		char* vehicle_data = malloc(entry_data_len);
-
-		// 2.4 Copia os campos 'removido', 'tamanho do registro' e lê o resto
-		vehicle_data[0] = removed;
-		memcpy(&vehicle_data[1], &entry_len, sizeof(int));
-		fread(&vehicle_data[5], sizeof(char), entry_len, vehicle_bin);
+		char* vehicle = read_entry(removed, vehicle_bin);
+		if (vehicle == NULL) continue;
 
 		// 2.5 Pega, em veiculo, campo que vai ser comparado — codigo de linha
-		int vehicle_line_code = vehicle_get_line_code(vehicle_data);
+		int vehicle_line_code = vehicle_get_line_code(vehicle);
 
 		// 2. Procurar pela key no arquivo de indice (btree)
 		long line_offset = search_btree(line_btree, vehicle_line_code);
@@ -182,24 +128,20 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 
 			// 4. Se o registro estiver presente
 			if (removed == '1') {
-				int entry_size;
-				fread(&entry_size, sizeof(int), 1, line_bin);
-
 				// 4.1 Ler dados de registro no arquivo binario, e fechar o arquivo
-				char line_data[5+entry_size];
-				line_data[0] = removed;
-				memcpy(&line_data[1], &entry_len, sizeof(int));
-				fread(&line_data[5], sizeof(char), entry_size, line_bin);
+				char* line = read_entry(removed, line_bin);
 
 				// 4.2 Printar registro veiculo e registro linha correspondentes
-				display_vehicle_from_data(vehicle_data);
+				display_vehicle_from_data(vehicle);
 				printf("\n");
-				display_line_from_data(line_data);
+				display_line_from_data(line);
 				printf("\n\n");
 				any_code_found = 1;
+
+				free(line);
 			}
 		}
-		free(vehicle_data); // Free no registro veiculo lido
+		free(vehicle); // Free no registro veiculo lido
 	}
 
 	// 5. Caso não haja nenhuma junção
@@ -208,18 +150,8 @@ void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	}
 
 	// 6. Fechar os arquivos abertos
-	fclose(vehicle_bin);
-	vehicle_header->status = '1';
-	header_write(vehicle_name, vehicle_header);
-	header_free(vehicle_header);
-	
+	fclose(vehicle_bin);	
 	fclose(line_bin);
-	line_header->status = '1';
-	header_write(line_name, line_header);
-	header_free(line_header);
-
-	line_btree->status = '1';
-	btree_write_header(line_btree);
 	btree_delete(line_btree);
 }
 
@@ -234,27 +166,10 @@ char** binary_load_to_memory(FILE* bin,Bin_header* bin_header) {
 	// 1. Loop carregando registros do arquivo para memória: lê registro -> guarda no vetor de registros
 	char removed;
 	while ((fread(&removed, sizeof(char), 1, bin)) > 0) {
-		// 3.1 Le tamanho do registro
-		int entry_len;
-		fread(&entry_len, sizeof(int), 1, bin);
+		char* entry = read_entry(removed, bin);
+		if (entry == NULL) continue;
 
-		// 3.2 Registro logicamente removido: pula para proximo loop
-		if (removed == '0') {
-			fseek(bin, entry_len, SEEK_CUR);
-			continue;
-		}
-
-		// 3.3 Aloca memoria para o registro
-		int entry_data_len = sizeof(char) + sizeof(int) + entry_len;
-		char* entry_data = malloc(entry_data_len);
-
-		// 3.4 Copia os campos 'removido', 'tamanho do registro' e lê o resto
-		entry_data[0] = removed;
-		memcpy(&entry_data[1], &entry_len, sizeof(int));
-		fread(&entry_data[5], sizeof(char), entry_len, bin);
-
-		// 3.5 Insere registro no vetor de registros
-		binary_entries[entries_pos++] = entry_data;
+		binary_entries[entries_pos++] = entry;
 	}
 
 	return binary_entries;
@@ -300,15 +215,15 @@ void sort_table(int op,char* in_name,char* out_name) {
 	// 5. Escrevendo o vetor de registros, ordenado, no arquivo de saida.
 	for (int i = 0; i < entry_qty; i++) {
 		// 5.1 Lendo tamanho do registro atual
-		char* entry_data = binary_entries[i];
+		char* entry = binary_entries[i];
 		int entry_data_len;
-		memcpy(&entry_data_len, &entry_data[1], sizeof(int));
+		memcpy(&entry_data_len, &entry[1], sizeof(int));
 
 		// 5.2 Escrevendo registro atual no arquivo de saida
-		fwrite(entry_data, sizeof(char)+sizeof(int)+entry_data_len, 1, bin_out);
+		fwrite(entry, sizeof(char)+sizeof(int)+entry_data_len, 1, bin_out);
 
 		// 5.3 Liberando memoria do registro atual
-		free(entry_data);
+		free(entry);
 
 		// 5.4 Atualizando informacao do cabecalho
 		bin_header->nroRegistros++;
@@ -364,33 +279,33 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 	// 4. Loop fazendo o merge
 	while (vehicle_pos < vehicle_qty && line_pos < line_qty) {
 		// 4.1 Pegar o campo "codigo de linha" dos dois registrados apontados
-		char* vehicle_data = vehicle_entries[vehicle_pos];
-		int vehicle_line_code = vehicle_get_line_code(vehicle_data);
+		char* vehicle = vehicle_entries[vehicle_pos];
+		int vehicle_line_code = vehicle_get_line_code(vehicle);
 		
-		char* line_data = line_entries[line_pos];
-		int line_code = line_get_key(line_data);
+		char* line = line_entries[line_pos];
+		int line_code = line_get_key(line);
 
 		// 4.2 Comparar o "codigo de linha" dos dois registros apontados
 		if (vehicle_line_code == line_code) {
 			// 5. Merge! Printar o registro veiculo e o registro linha correspondente
-			display_vehicle_from_data(vehicle_data);
+			display_vehicle_from_data(vehicle);
 			printf("\n");
-			display_line_from_data(line_data);
+			display_line_from_data(line);
 			printf("\n\n");
 			any_match_occured = 1;
 			
 			// 5.1 Liberar memoria dos registros mostrados
-			free(vehicle_data);
+			free(vehicle);
 			
 			// 5.2 Andar ponteiro
 			vehicle_pos++;
 		} else if(vehicle_line_code < line_code) {
 			// 6. Liberar memoria do registro veiculo e andar seu ponteiro
-			free(vehicle_data);
+			free(vehicle);
 			vehicle_pos++;
 		} else {
 			// 7. Liberar memoria do registro linha e andar seu ponteiro
-			free(line_data);
+			free(line);
 			line_pos++;
 		}
 	}
