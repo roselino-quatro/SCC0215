@@ -19,8 +19,7 @@ char* read_entry(char is_removed, FILE* bin) {
 	}
 
 	// 3 Aloca memoria para o registro
-	entry_len += sizeof(char) + sizeof(int);
-	char* entry = malloc(entry_len);
+	char* entry = malloc(entry_len + sizeof(char) + sizeof(int));
 
 	// 3 Copia os campos 'removido', 'tamanho do registro' e lê o resto
 	entry[0] = is_removed;
@@ -234,16 +233,16 @@ void sort_table(int op,char* in_name,char* out_name) {
 	header_free(bin_header);
 	free(binary_entries);
 	fclose(bin_out);
-
-	// 8. binarioNaTela no arquivo de saida
-	binarioNaTela(out_name);
 }
 
 // Funcao 19 do trabalho 3 ——— Carregar veiculos e linhas na memoria, depois
 //                                printar matches usando two-pointer approach.
 void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
+	sort_table(17, vehicle_bin_name, "veiculo_merge.bin");
+	sort_table(18, line_bin_name, "line_merge.bin");
+
 	// 0. Carregando registros de veiculo na memória
-	FILE* vehicle_bin = fopen_valid(vehicle_bin_name, "rb");
+	FILE* vehicle_bin = fopen_valid("veiculo_merge.bin", "rb");
 	if (vehicle_bin == NULL) return;
 
 	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
@@ -251,16 +250,12 @@ void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 	fclose(vehicle_bin);
 
 	// 1. Carregando registros de linha na memória
-	FILE* line_bin = fopen_valid(line_bin_name, "rb");
+	FILE* line_bin = fopen_valid("line_merge.bin", "rb");
 	if (line_bin == NULL) return;
 	
 	Bin_header* line_header = header_read(line_bin, LINE_DESCRIPTION_LEN);
 	char** line_entries = binary_load_to_memory(line_bin, line_header);
 	fclose(line_bin);
-
-	// 2. Ordenando registros de veiculo e registros de linha
-	qsort(vehicle_entries, vehicle_header->nroRegistros, sizeof(char*), vehicle_cmp);
-	qsort(line_entries   , line_header->nroRegistros   , sizeof(char*), line_cmp);
 
 	// 3. Criando ponteiros de indice para registros de veiculo e registros de linha
 	int vehicle_qty = vehicle_header->nroRegistros;
@@ -335,6 +330,7 @@ void trabalho2_menu(char** arguments) {
 		case 17:
 		case 18:
 			sort_table(operation, arguments[1], arguments[2]);
+			binarioNaTela(arguments[2]);
 			break;
 		case 19:
 			merge_tables(arguments[1], arguments[2]);
