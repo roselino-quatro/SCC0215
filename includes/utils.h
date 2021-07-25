@@ -33,7 +33,7 @@ void string_to_csv(char* string);
 * Abre arquivo de acordo com a especificação do trabalho.
 * Caso não consiga abrir, ou arquivo esteja invalido -> sai do programa com exit(0).
 */
-FILE* fopen_safe(char* name,char* mode);
+FILE* fopen_valid(char* name,char* mode);
 
 void binarioNaTela(char *nomeArquivoBinario);
 

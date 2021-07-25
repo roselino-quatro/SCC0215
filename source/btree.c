@@ -56,6 +56,7 @@ Btree* btree_read_header(char* file_name) {
 
 	FILE* btree_file = fopen(file_name, "rb");
 	if(btree_file == NULL || fgetc(btree_file) != '1') {
+		printf("Falha no processamento do arquivo.\n");
 		return NULL;
 	}
 	rewind(btree_file);

@@ -11,16 +11,10 @@
 //                                 registros correspondentes por "codigo de linha".
 void join_bruteforce(char* vehicle_name,char* line_name) {
 	// 0. Abrindo arquivos utilizados
-	FILE* vehicle_bin = fopen(vehicle_name, "rb");
-	FILE* line_bin = fopen(line_name, "rb");
-	if (vehicle_bin == NULL || line_bin == NULL) {
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	}
-	if (fgetc(vehicle_bin) == '0' || fgetc(line_bin) == '0') {
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	}
+	FILE* vehicle_bin = fopen_valid(vehicle_name, "rb");
+	FILE* line_bin = fopen_valid(line_name, "rb");
+	if (vehicle_bin == NULL || line_bin == NULL) return;
+
 	rewind(vehicle_bin);
 	rewind(line_bin);
 
@@ -127,16 +121,13 @@ void join_bruteforce(char* vehicle_name,char* line_name) {
 void join_simple(char* vehicle_name,char* line_name,char* line_btree_name) {
 	// 0. Abrindo arquivos utilizados
 	Btree* line_btree = btree_read_header(line_btree_name);
-	FILE* vehicle_bin = fopen(vehicle_name, "rb");
-	FILE* line_bin = fopen(line_name, "rb");
+	FILE* vehicle_bin = fopen_valid(vehicle_name, "rb");
+	FILE* line_bin = fopen_valid(line_name, "rb");
+
 	if (line_btree == NULL || vehicle_bin == NULL || line_bin == NULL) {
-		printf("Falha no processamento do arquivo.\n");
 		return;
 	}
-	if (fgetc(vehicle_bin) == '0' || fgetc(line_bin) == '0') {
-		printf("Falha no processamento do arquivo.\n");
-		return;
-	}
+
 	rewind(vehicle_bin);
 	rewind(line_bin);
 
@@ -284,7 +275,9 @@ void sort_table(int op,char* in_name,char* out_name) {
 	}
 
 	// 1. Carregando registros do arquivo para memória
-	FILE* bin = fopen_safe(in_name, "rb");
+	FILE* bin = fopen_valid(in_name, "rb");
+	if (bin == NULL) return;
+
 	Bin_header* bin_header = header_read(bin, header_description_len);
 	char** binary_entries = binary_load_to_memory(bin, bin_header);
 	fclose(bin);	
@@ -339,13 +332,17 @@ void sort_table(int op,char* in_name,char* out_name) {
 //                                printar matches usando two-pointer approach.
 void merge_tables(char* vehicle_bin_name,char* line_bin_name) {
 	// 0. Carregando registros de veiculo na memória
-	FILE* vehicle_bin = fopen_safe(vehicle_bin_name, "rb");
+	FILE* vehicle_bin = fopen_valid(vehicle_bin_name, "rb");
+	if (vehicle_bin == NULL) return;
+
 	Bin_header* vehicle_header = header_read(vehicle_bin, VEHICLE_DESCRIPTION_LEN);
 	char** vehicle_entries = binary_load_to_memory(vehicle_bin, vehicle_header);
 	fclose(vehicle_bin);
 
 	// 1. Carregando registros de linha na memória
-	FILE* line_bin = fopen_safe(line_bin_name, "rb");
+	FILE* line_bin = fopen_valid(line_bin_name, "rb");
+	if (line_bin == NULL) return;
+	
 	Bin_header* line_header = header_read(line_bin, LINE_DESCRIPTION_LEN);
 	char** line_entries = binary_load_to_memory(line_bin, line_header);
 	fclose(line_bin);
